@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Palworld REST API Library</Title>
+    <Authors>$(AssemblyName),Malstech</Authors>
+    <Description>A C# .NET standard library for communicating with Palworld server REST API Service.</Description>
+    <AnalysisLevel>none</AnalysisLevel>
+    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
+    <PackageTags>Palworld,REST,API,PalworldRESTAPI</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Copyright© Malstech, BalphagoreVR</Copyright>
+    <PackageIcon>RestSharpLogo-128.png</PackageIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>1</WarningLevel>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <WarningLevel>1</WarningLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\RestSharpLogo-128.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+</Project>

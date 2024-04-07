@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34714.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Palworld.RESTSharp", "Palworld.RESTSharp\Palworld.RESTSharp.csproj", "{74AE5151-5394-4F0A-A264-425BC597F412}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Palworld.RESTSharp.Client", "Palworld.RESTSharp.Client\Palworld.RESTSharp.Client.csproj", "{1F459C73-1CEF-477B-94F2-34C46695B2FC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFiles", "SolutionFiles", "{541EFF06-8B59-48BB-8C93-7B8DC7DA4089}"
+	ProjectSection(SolutionItems) = preProject
+		RestSharpLogo-128.png = RestSharpLogo-128.png
+		RestSharpLogo-32.png = RestSharpLogo-32.png
+		RestSharpLogo.ico = RestSharpLogo.ico
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{74AE5151-5394-4F0A-A264-425BC597F412}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74AE5151-5394-4F0A-A264-425BC597F412}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74AE5151-5394-4F0A-A264-425BC597F412}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74AE5151-5394-4F0A-A264-425BC597F412}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F459C73-1CEF-477B-94F2-34C46695B2FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F459C73-1CEF-477B-94F2-34C46695B2FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F459C73-1CEF-477B-94F2-34C46695B2FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F459C73-1CEF-477B-94F2-34C46695B2FC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5E004C8D-9DC4-40DF-A8E9-4604D719C4C7}
+	EndGlobalSection
+EndGlobal
