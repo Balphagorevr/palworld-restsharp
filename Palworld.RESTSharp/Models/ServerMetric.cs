@@ -3,7 +3,7 @@
 namespace Palworld.RESTSharp
 {
     /// <summary>
-    /// Represents a server metric object returned from an API.
+    /// Represents a server metric object returned from the API.
     /// </summary>
     public class ServerMetric
     {
