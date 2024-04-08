@@ -15,6 +15,14 @@ Should Pocketpair release support for HTTPS and better authentication, I will up
 	* RESTAPIPort=xxxx (Specify your preferred port)
 	* AdminPassword=**** (You should already have this configured to access your RCON/In-game Admin rights).
 
+## Getting Started
+
+### Install Nu-Get Package
+1. Visit the linked NuGet release page/package and download.
+
+### Clone and build your own
+You can choose to clone this repository and build the library yourself.
+
 ## :electric_plug: Using the Library
 ```csharp
 using Palworld.RESTSharp;
