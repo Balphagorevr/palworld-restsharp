@@ -6,19 +6,20 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Title>Palworld REST API Library</Title>
-    <Authors>$(AssemblyName),Balphagore</Authors>
+    <Authors>BalphagoreVR</Authors>
     <Description>A C# .NET standard library for communicating with Palworld server REST API Service.</Description>
     <AnalysisLevel>none</AnalysisLevel>
-    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
-    <PackageTags>Palworld,REST,API,PalworldRESTAPI</PackageTags>
+    <PackageReleaseNotes>Updated build configuration.</PackageReleaseNotes>
+    <PackageTags>Palworld,REST,API,PalworldRESTAPI,RESTAPI</PackageTags>
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright© Malstech, BalphagoreVR</Copyright>
     <PackageIcon>RestSharpLogo-128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/Balphagorevr/palworld-restsharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Balphagorevr/palworld-restsharp</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <FileVersion>1.0.1</FileVersion>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -30,6 +31,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

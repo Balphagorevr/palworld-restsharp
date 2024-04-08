@@ -2,6 +2,9 @@
 <h1 align="center">Palworld RESTSharp</h1>
 <p align="center">A C# library for the Palworld Dedicated Server REST API.
 
+![GitHub Release](https://img.shields.io/github/v/release/BalphagoreVR/palworld-restsharp)
+
+
 ## :warning: Disclaimer :warning:
 It is not advised to expose your REST API to the internet since it does not support HTTPS and only uses Basic authentication which sends your password through plain text.
 
@@ -18,7 +21,9 @@ Should Pocketpair release support for HTTPS and better authentication, I will up
 ## Getting Started
 
 ### Install Nu-Get Package
-1. Visit the linked NuGet release page/package and download.
+Search on NuGet either through nuget.org or your NuGet package manager of choice.
+
+https://www.nuget.org/packages/Palworld.RESTSharp/
 
 ### Clone and build your own
 You can choose to clone this repository and build the library yourself.
