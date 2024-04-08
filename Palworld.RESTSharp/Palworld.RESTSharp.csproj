@@ -17,8 +17,9 @@
     <PackageProjectUrl>https://github.com/Balphagorevr/palworld-restsharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Balphagorevr/palworld-restsharp</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <AssemblyVersion>1.0.1</AssemblyVersion>
-    <FileVersion>1.0.1</FileVersion>
+	<AssemblyVersion>1.0.1</AssemblyVersion>
+	<FileVersion>$(AssemblyVersion)</FileVersion>
+	<Version>$(AssemblyVersion)</Version>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
