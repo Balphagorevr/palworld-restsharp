@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Palworld.RESTSharp.Client",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFiles", "SolutionFiles", "{541EFF06-8B59-48BB-8C93-7B8DC7DA4089}"
 	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
 		.github\workflows\nuget-publish.yml = .github\workflows\nuget-publish.yml
+		.github\workflows\publish-client.yml = .github\workflows\publish-client.yml
 		README.md = README.md
 		RestSharpLogo-128.png = RestSharpLogo-128.png
 		RestSharpLogo-32.png = RestSharpLogo-32.png

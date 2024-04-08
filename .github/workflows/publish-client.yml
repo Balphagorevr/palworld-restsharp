@@ -1,0 +1,78 @@
+name: publish-client-multi-platform
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-library:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1'
+
+    # Lib
+    - name: Build and Pack Library
+      run: |
+        dotnet build Palworld.RESTSharp/Palworld.RESTSharp.csproj --configuration Release
+        dotnet pack Palworld.RESTSharp/Palworld.RESTSharp.csproj --configuration Release --output nupkg
+
+    # add as artifact
+    - name: Upload NuGet Package
+      uses: actions/upload-artifact@v2
+      with:
+        name: nuget-package
+        path: nupkg
+
+  build-windows-client-x64:
+    needs: build-library
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0' # my pref
+
+    - name: Restore and Build Client Application
+      run: |
+        dotnet restore Palworld.RESTSharp.Client/Palworld.RESTSharp.Client.csproj
+        dotnet publish Palworld.RESTSharp.Client/Palworld.RESTSharp.Client.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
+
+    - name: Upload WinForms Application
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-client
+        path: publish/win-x64
+
+  build-windows-client-x32:
+    needs: build-library
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0' # my pref
+
+    - name: Restore and Build Client Application
+      run: |
+        dotnet restore Palworld.RESTSharp.Client/Palworld.RESTSharp.Client.csproj
+        dotnet publish Palworld.RESTSharp.Client/Palworld.RESTSharp.Client.csproj -c Release -r win-x86 --self-contained true -p:PublishSingleFile=true -o publish/win-x86
+
+    - name: Upload WinForms Application
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-client
+        path: publish/win-x64

@@ -23,7 +23,10 @@ namespace Palworld.RESTSharp
         [JsonProperty("description")]
         public string description { get; set; }
 
-
+        /// <summary>
+        /// Returns the string representation of the server info.
+        /// </summary>
+        /// <returns>Server name, version, and description in a single line.</returns>
         public override string ToString() => $"[{serverName}][{version}][{description}]";
     }
 }

@@ -33,12 +33,17 @@ namespace Palworld.RESTSharp
         [JsonProperty("uptime")]
         public int upTime { get; set; }
 
+        /// <summary>
+        /// Gets the uptime of the server expressed in hours, minutes, and seconds.
+        /// </summary>
+        /// <returns></returns>
         public string GetUptimeString()
         {
+            int days = upTime / 86400;
             int hours = upTime / 3600;
             int minutes = (upTime % 3600) / 60;
             int seconds = upTime % 60;
-            return $"{hours}h {minutes}m {seconds}s";
+            return $"{days}d {hours}h {minutes}m {seconds}s";
         }
     }
 }

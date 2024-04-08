@@ -203,7 +203,7 @@ namespace Palworld.RESTSharp.Client
                     txtReasonMessage = new TextBox();
                     lblReason = new Label() { Text = "Shutdown Message" };
                     Label lblDelay = new Label() { Text = "Delay (Seconds)" };
-                    
+
                     txtReasonMessage.Dock = DockStyle.Top;
                     txtReasonMessage.PlaceholderText = "Enter reason for shutdown";
                     panelRequestParameters.Controls.Add(txtReasonMessage);
@@ -278,8 +278,10 @@ namespace Palworld.RESTSharp.Client
                     this.Text = _defaultTitle;
                     _connected = true;
                     this.Text = _defaultTitle + $" - {serverInfo.serverName}";
+
+                    UpdateServerMetricCounterAsync();
                 }
-                else
+                else // Disconnected
                 {
                     txtconfigURL.ReadOnly = false;
                     txtConfigPassword.ReadOnly = false;
@@ -290,14 +292,31 @@ namespace Palworld.RESTSharp.Client
                     this.Text = _defaultTitle;
                 }
             }
-            catch(PalworldRESTSharpClientUnauthorizedException pex)
+            catch (PalworldRESTSharpClientUnauthorizedException pex)
             {
                 MessageBox.Show(pex.Message, "Invalid Password");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show(ex.Message,"Error connecting");
+                MessageBox.Show(ex.Message, "Error connecting");
             }
+        }
+
+        private async Task UpdateServerMetricCounterAsync()
+        {
+            while (_connected && cbTrackMetrics.Checked)
+            {
+                ServerMetric serverMetric = await palworldRESTAPIClient.GetServerMetricsASync();
+                if (serverMetric != null)
+                {
+                    stsPlayerCount.Text = $"Players: {serverMetric.totalPlayers}/{serverMetric.maxPlayers}";
+                    stsServerUptimeAndFPS.Text = $"Uptime: {serverMetric.GetUptimeString()} | FPS: {serverMetric.serverFPS}";
+                }
+                await Task.Delay(1000);
+            }
+
+            stsPlayerCount.Text = "";
+            stsServerUptimeAndFPS.Text = "";
         }
 
         private async void Execute()
@@ -370,6 +389,9 @@ namespace Palworld.RESTSharp.Client
                             lbServerMetrics.Items.Add($"Frame Rate: {serverMetric.serverFrameRate}");
                             lbServerMetrics.Items.Add($"Max Players: {serverMetric.maxPlayers}");
                             lbServerMetrics.Items.Add($"Uptime: {serverMetric.upTime}");
+
+                            stsPlayerCount.Text = $"Players: {serverMetric.totalPlayers}/{serverMetric.maxPlayers}";
+                            stsServerUptimeAndFPS.Text = $"Uptime: {serverMetric.GetUptimeString()} | FPS: {serverMetric.serverFPS}";
                             panelResponse.Controls.Add(lbServerMetrics);
                         }
 
@@ -511,7 +533,7 @@ namespace Palworld.RESTSharp.Client
                         break;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show($"{ex.Message}\n\nException:\n{ex.StackTrace}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -522,6 +544,20 @@ namespace Palworld.RESTSharp.Client
             Execute();
 
             connectionStatus.Text = "Executed";
+        }
+
+        private void cbTrackMetrics_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cbTrackMetrics.Checked)
+            {
+                // Show user a warning and prompt to continue or cancel.
+                DialogResult result = MessageBox.Show("Tracking server metrics will periodically poll the REST API resulting in excessive log spam in the server console. Do you want to continue?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            
+                if (result == DialogResult.No)
+                {
+                    cbTrackMetrics.Checked = false;
+                }
+            }
         }
     }
 }
