@@ -2,8 +2,9 @@
 <h1 align="center">Palworld RESTSharp</h1>
 <p align="center">A C# library for the Palworld Dedicated Server REST API.
 
-![GitHub Release](https://img.shields.io/github/v/release/BalphagoreVR/palworld-restsharp)
-
+![GitHub Release](https://img.shields.io/github/v/release/BalphagoreVR/palworld-restsharp) 
+<a href="https://www.nuget.org/packages/Palworld.RESTSharp">![NuGet Version](https://img.shields.io/nuget/v/Palworld.RESTSharp)
+</a>
 
 ## :warning: Disclaimer :warning:
 It is not advised to expose your REST API to the internet since it does not support HTTPS and only uses Basic authentication which sends your password through plain text.
@@ -58,7 +59,6 @@ foreach (Player player in palPlayers.players)
 * Create player markers on in-game map.
 * Create a ASP.NET Core site to demonstrate and use library within a webpage and serve a HTTPS reverse proxy.
 * Optimizations.
-* Setup CI/CD pipeline and publish to NuGet.
 
 ## :grey_question: Questions/Support
 Feel free to join https://discord.galacticpals.net for assistance or have questions.
