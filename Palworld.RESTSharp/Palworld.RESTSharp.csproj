@@ -17,10 +17,12 @@
     <PackageProjectUrl>https://github.com/Balphagorevr/palworld-restsharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Balphagorevr/palworld-restsharp</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-	<AssemblyVersion>1.0.1</AssemblyVersion>
+	<AssemblyVersion>$(AssemblyVersion)</AssemblyVersion>
 	<FileVersion>$(AssemblyVersion)</FileVersion>
+	<PackageVersion>$(AssemblyVersion)</PackageVersion>
 	<Version>$(AssemblyVersion)</Version>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

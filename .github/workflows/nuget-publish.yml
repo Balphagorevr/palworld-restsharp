@@ -22,7 +22,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release /p:DocumentationFile=bin/Release/netstandard2.1/Palworld.RESTSharp.xml Palworld.RESTSharp/Palworld.RESTSharp.csproj
 
     - name: Pack
-      run: dotnet pack --no-build --configuration Release --output nupkg Palworld.RESTSharp/Palworld.RESTSharp.csproj
+      run: dotnet pack --no-build --configuration Release --output nupkg /p:PackageVersion=${{ github.ref_name }}.Substring(1) Palworld.RESTSharp/Palworld.RESTSharp.csproj
 
     - name: Publish to NuGet
       run: dotnet nuget push "nupkg/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{secrets.NUGETKEY}}
