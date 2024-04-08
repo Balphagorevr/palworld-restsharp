@@ -248,42 +248,56 @@ namespace Palworld.RESTSharp.Client
 
         private async void btnSaveConfig_Click(object sender, EventArgs e)
         {
-            if (!_connected)
+            try
             {
-                if (txtconfigURL.Text == "" || txtConfigPassword.Text == "")
+                if (!_connected)
                 {
-                    MessageBox.Show("URL and Password required.");
-                    return;
+                    if (txtconfigURL.Text == "" || txtConfigPassword.Text == "")
+                    {
+                        MessageBox.Show("URL and Password required");
+                        return;
+                    }
+
+                    apiURL = txtconfigURL.Text;
+                    apiPassword = txtConfigPassword.Text;
+                    palworldRESTAPIClient = new PalworldRESTSharpClient(apiURL, apiPassword);
+                    serverInfo = await palworldRESTAPIClient.GetServerInfoASync();
+
+
+                    if (serverInfo == null)
+                    {
+                        throw new Exception("Failed to get sever information.");
+                    }
+
+                    btnExecute.Enabled = true;
+                    btnSaveConfig.Text = "Disconnect";
+                    connectionStatus.Text = "Connected.";
+                    txtconfigURL.ReadOnly = true;
+                    txtConfigPassword.ReadOnly = true;
+                    tAPIOptions.Visible = true;
+                    this.Text = _defaultTitle;
+                    _connected = true;
+                    this.Text = _defaultTitle + $" - {serverInfo.serverName}";
                 }
-                
-                txtconfigURL.ReadOnly = true;
-                txtConfigPassword.ReadOnly = true;
-                tAPIOptions.Visible = true;
-                apiURL = txtconfigURL.Text;
-                apiPassword = txtConfigPassword.Text;
-                palworldRESTAPIClient = new PalworldRESTSharpClient(apiURL, apiPassword);
-                btnExecute.Enabled = true;
-                btnSaveConfig.Text = "Disconnect";
-                connectionStatus.Text = "Connected.";
-
-                serverInfo = await palworldRESTAPIClient.GetServerInfoASync();
-
-                _connected = true;
-                this.Text = _defaultTitle + $" - {serverInfo.serverName}";
-
+                else
+                {
+                    txtconfigURL.ReadOnly = false;
+                    txtConfigPassword.ReadOnly = false;
+                    tAPIOptions.Visible = false;
+                    connectionStatus.Text = "Disconnected.";
+                    btnSaveConfig.Text = "Connect";
+                    _connected = false;
+                    this.Text = _defaultTitle;
+                }
             }
-            else
+            catch(PalworldRESTSharpClientUnauthorizedException pex)
             {
-                txtconfigURL.ReadOnly = false;
-                txtConfigPassword.ReadOnly = false;
-                tAPIOptions.Visible = false;
-                connectionStatus.Text = "Disconnected.";
-                btnSaveConfig.Text = "Connect";
-                _connected = false;
-
-                this.Text = _defaultTitle;
+                MessageBox.Show(pex.Message, "Invalid Password");
             }
-            
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message,"Error connecting");
+            }
         }
 
         private async void Execute()
@@ -487,6 +501,9 @@ namespace Palworld.RESTSharp.Client
                         panelResponse.Controls.Add(txtResponse);
                         break;
                     case "Stop Server":
+
+                        await palworldRESTAPIClient.StopServerASync();
+
                         txtResponse.ReadOnly = true;
                         txtResponse.Dock = DockStyle.Fill;
                         txtResponse.Text = "Server Stop acknowledged.";

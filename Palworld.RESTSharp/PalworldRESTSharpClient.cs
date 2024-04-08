@@ -194,7 +194,7 @@ namespace Palworld.RESTSharp
             if (waitTime <= 0) throw new ArgumentOutOfRangeException(nameof(waitTime), "Wait time must be greater than 0.");
             if (string.IsNullOrEmpty(message)) throw new ArgumentNullException(nameof(message), "Message cannot be null or empty.");
 
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("announce", new { waittime = waitTime, message });
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("shutdown", new { waittime = waitTime, message });
             HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
