@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace Palworld.RESTSharp
+namespace Palworld.RESTSharp.Common
 {
     /// <summary>
     /// Represents the root Player object in the JSON response from the server. This will hold the array of players online at the time of response.
@@ -48,14 +48,18 @@ namespace Palworld.RESTSharp
         /// <summary>
         /// Steam ID of the user account.
         /// </summary>
+#if REGULAR_NAME
         [JsonProperty("userid")]
-        public string steamID { get; set; }
+#endif
+        public string userid { get; set; }
 
         /// <summary>
         /// IP Address of the user.
         /// </summary>
+#if REGULAR_NAME
         [JsonProperty("ip")]
-        public string ipAddress { get; set; }
+#endif
+        public string ip { get; set; }
 
         /// <summary>
         /// Ping of the user.

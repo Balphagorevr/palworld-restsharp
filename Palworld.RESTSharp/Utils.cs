@@ -20,7 +20,8 @@ namespace Palworld.RESTSharp
         internal static HttpRequestMessage CreateHttpPostRequest(string apiEndpoint, object requestData)
         {
             HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, apiEndpoint);
-            StringContent content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
+            string json = JsonConvert.SerializeObject(requestData);
+            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
             requestMessage.Content = content;
             return requestMessage;
         }

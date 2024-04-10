@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Palworld.RESTSharp
+namespace Palworld.RESTSharp.Common
 {
     /// <summary>
     /// Represents the server settings object returned from API.

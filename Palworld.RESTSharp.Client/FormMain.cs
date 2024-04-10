@@ -1,3 +1,6 @@
+using Palworld.RESTSharp.Common;
+using System.Net.Http.Headers;
+
 namespace Palworld.RESTSharp.Client
 {
     public partial class FormMain : Form
@@ -6,6 +9,7 @@ namespace Palworld.RESTSharp.Client
         string apiURL;
         string apiPassword;
         bool _connected;
+        bool _usingProxy;
         const string _defaultTitle = "Palworld REST Client";
         PalworldRESTSharpClient palworldRESTAPIClient;
         Players players;
@@ -22,7 +26,9 @@ namespace Palworld.RESTSharp.Client
         Label lblReason;
         NumericUpDown shutdownDelay;
         ContextMenuStrip userContextMenu;
+        HttpClient proxyHttpClient;
         DataGridViewCell selectedUserCell;
+
         public FormMain()
         {
             InitializeComponent();
@@ -70,6 +76,7 @@ namespace Palworld.RESTSharp.Client
 
         private void SetupNavigationTree()
         {
+            TreeNode proxyServerConfig = new TreeNode("Proxy Server Configuration");
             TreeNode configureNode = new TreeNode("Client Configuration");
             tAPIOptions.Nodes.Add(configureNode);
 
@@ -261,6 +268,23 @@ namespace Palworld.RESTSharp.Client
                     apiURL = txtconfigURL.Text;
                     apiPassword = txtConfigPassword.Text;
                     palworldRESTAPIClient = new PalworldRESTSharpClient(apiURL, apiPassword);
+
+
+                    if (_usingProxy)
+                    {
+                        User user = await palworldRESTAPIClient.GetUserProfile(apiPassword);
+
+                        if (user == null)
+                        {
+                            MessageBox.Show("Invalid token or you do not have permission to access this resource.", "Unauthorized");
+                            return;
+                        }
+                        else
+                        {
+                            MessageBox.Show($"UserID: {user.ID}\nUsername: {user.UserName}\nRoles: {String.Join(",", user.Roles)}", "Proxy account result");
+                        }
+                    }
+
                     serverInfo = await palworldRESTAPIClient.GetServerInfoASync();
 
 
@@ -552,12 +576,30 @@ namespace Palworld.RESTSharp.Client
             {
                 // Show user a warning and prompt to continue or cancel.
                 DialogResult result = MessageBox.Show("Tracking server metrics will periodically poll the REST API resulting in excessive log spam in the server console. Do you want to continue?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-            
+
                 if (result == DialogResult.No)
                 {
                     cbTrackMetrics.Checked = false;
                 }
             }
+        }
+
+        private void cbUseProxy_CheckedChanged(object sender, EventArgs e)
+        {
+            if (cbUseProxy.Checked)
+            {
+                lblPassword.Text = "Token";
+                _usingProxy = true;
+            }
+            else
+            {
+                lblPassword.Text = "Password";
+            }
+        }
+
+        private void groupBox2_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 }

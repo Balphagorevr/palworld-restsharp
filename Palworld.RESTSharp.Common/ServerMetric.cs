@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Palworld.RESTSharp
+namespace Palworld.RESTSharp.Common
 {
     /// <summary>
     /// Represents a server metric object returned from the API.
@@ -41,7 +41,7 @@ namespace Palworld.RESTSharp
         {
             int days = upTime / 86400;
             int hours = upTime / 3600;
-            int minutes = (upTime % 3600) / 60;
+            int minutes = upTime % 3600 / 60;
             int seconds = upTime % 60;
             return $"{days}d {hours}h {minutes}m {seconds}s";
         }

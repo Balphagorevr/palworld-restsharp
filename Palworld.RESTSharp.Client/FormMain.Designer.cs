@@ -38,16 +38,21 @@
             label1 = new Label();
             btnExecute = new Button();
             pageConfigure = new Panel();
-            txtConfigPassword = new TextBox();
-            cbTrackMetrics = new CheckBox();
-            label4 = new Label();
+            groupBox2 = new GroupBox();
+            cbUseProxy = new CheckBox();
             txtconfigURL = new TextBox();
+            txtConfigPassword = new TextBox();
+            label4 = new Label();
+            lblPassword = new Label();
+            groupBox1 = new GroupBox();
+            cbTrackMetrics = new CheckBox();
             btnSaveConfig = new Button();
-            label3 = new Label();
             panelRequestParameters = new Panel();
             lblHeader = new Label();
             statusStrip1.SuspendLayout();
             pageConfigure.SuspendLayout();
+            groupBox2.SuspendLayout();
+            groupBox1.SuspendLayout();
             SuspendLayout();
             // 
             // panelResponse
@@ -115,30 +120,89 @@
             // 
             // pageConfigure
             // 
-            pageConfigure.Controls.Add(txtConfigPassword);
-            pageConfigure.Controls.Add(cbTrackMetrics);
-            pageConfigure.Controls.Add(label4);
-            pageConfigure.Controls.Add(txtconfigURL);
+            pageConfigure.Controls.Add(groupBox2);
+            pageConfigure.Controls.Add(groupBox1);
             pageConfigure.Controls.Add(btnSaveConfig);
-            pageConfigure.Controls.Add(label3);
             pageConfigure.Location = new Point(222, 0);
             pageConfigure.Name = "pageConfigure";
-            pageConfigure.Size = new Size(770, 376);
+            pageConfigure.Size = new Size(770, 165);
             pageConfigure.TabIndex = 7;
             pageConfigure.Paint += pageConfigure_Paint;
             // 
+            // groupBox2
+            // 
+            groupBox2.Controls.Add(cbUseProxy);
+            groupBox2.Controls.Add(txtconfigURL);
+            groupBox2.Controls.Add(txtConfigPassword);
+            groupBox2.Controls.Add(label4);
+            groupBox2.Controls.Add(lblPassword);
+            groupBox2.Location = new Point(7, 12);
+            groupBox2.Name = "groupBox2";
+            groupBox2.Size = new Size(601, 100);
+            groupBox2.TabIndex = 14;
+            groupBox2.TabStop = false;
+            groupBox2.Text = "Configuration";
+            groupBox2.Enter += groupBox2_Enter;
+            // 
+            // cbUseProxy
+            // 
+            cbUseProxy.AutoSize = true;
+            cbUseProxy.Location = new Point(6, 75);
+            cbUseProxy.Name = "cbUseProxy";
+            cbUseProxy.Size = new Size(113, 19);
+            cbUseProxy.TabIndex = 12;
+            cbUseProxy.Text = "Use Proxy Server";
+            cbUseProxy.UseVisualStyleBackColor = true;
+            cbUseProxy.CheckedChanged += cbUseProxy_CheckedChanged;
+            // 
+            // txtconfigURL
+            // 
+            txtconfigURL.Location = new Point(67, 18);
+            txtconfigURL.Name = "txtconfigURL";
+            txtconfigURL.PlaceholderText = "http://127.0.0.1:8000";
+            txtconfigURL.Size = new Size(160, 23);
+            txtconfigURL.TabIndex = 9;
+            // 
             // txtConfigPassword
             // 
-            txtConfigPassword.Location = new Point(68, 38);
+            txtConfigPassword.Location = new Point(67, 50);
             txtConfigPassword.Name = "txtConfigPassword";
             txtConfigPassword.PasswordChar = '*';
-            txtConfigPassword.Size = new Size(683, 23);
+            txtConfigPassword.Size = new Size(160, 23);
             txtConfigPassword.TabIndex = 12;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(6, 21);
+            label4.Name = "label4";
+            label4.Size = new Size(28, 15);
+            label4.TabIndex = 10;
+            label4.Text = "URL";
+            // 
+            // lblPassword
+            // 
+            lblPassword.AutoSize = true;
+            lblPassword.Location = new Point(6, 53);
+            lblPassword.Name = "lblPassword";
+            lblPassword.Size = new Size(57, 15);
+            lblPassword.TabIndex = 1;
+            lblPassword.Text = "Password";
+            // 
+            // groupBox1
+            // 
+            groupBox1.Controls.Add(cbTrackMetrics);
+            groupBox1.Location = new Point(614, 12);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Size = new Size(144, 100);
+            groupBox1.TabIndex = 13;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "Options";
             // 
             // cbTrackMetrics
             // 
             cbTrackMetrics.AutoSize = true;
-            cbTrackMetrics.Location = new Point(7, 66);
+            cbTrackMetrics.Location = new Point(6, 22);
             cbTrackMetrics.Name = "cbTrackMetrics";
             cbTrackMetrics.Size = new Size(132, 19);
             cbTrackMetrics.TabIndex = 11;
@@ -146,41 +210,15 @@
             cbTrackMetrics.UseVisualStyleBackColor = true;
             cbTrackMetrics.CheckedChanged += cbTrackMetrics_CheckedChanged;
             // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new Point(5, 12);
-            label4.Name = "label4";
-            label4.Size = new Size(28, 15);
-            label4.TabIndex = 10;
-            label4.Text = "URL";
-            // 
-            // txtconfigURL
-            // 
-            txtconfigURL.Location = new Point(68, 8);
-            txtconfigURL.Name = "txtconfigURL";
-            txtconfigURL.PlaceholderText = "http://127.0.0.1:8000";
-            txtconfigURL.Size = new Size(683, 23);
-            txtconfigURL.TabIndex = 9;
-            // 
             // btnSaveConfig
             // 
-            btnSaveConfig.Location = new Point(5, 89);
+            btnSaveConfig.Location = new Point(5, 118);
             btnSaveConfig.Name = "btnSaveConfig";
             btnSaveConfig.Size = new Size(112, 23);
             btnSaveConfig.TabIndex = 8;
             btnSaveConfig.Text = "Connect";
             btnSaveConfig.UseVisualStyleBackColor = true;
             btnSaveConfig.Click += btnSaveConfig_Click;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(5, 41);
-            label3.Name = "label3";
-            label3.Size = new Size(57, 15);
-            label3.TabIndex = 1;
-            label3.Text = "Password";
             // 
             // panelRequestParameters
             // 
@@ -220,7 +258,10 @@
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             pageConfigure.ResumeLayout(false);
-            pageConfigure.PerformLayout();
+            groupBox2.ResumeLayout(false);
+            groupBox2.PerformLayout();
+            groupBox1.ResumeLayout(false);
+            groupBox1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -234,7 +275,7 @@
         private Label label1;
         private Button btnExecute;
         private Panel pageConfigure;
-        private Label label3;
+        private Label lblPassword;
         private Label label4;
         private TextBox txtconfigURL;
         private Button btnSaveConfig;
@@ -244,5 +285,8 @@
         private ToolStripStatusLabel stsServerUptimeAndFPS;
         private CheckBox cbTrackMetrics;
         private TextBox txtConfigPassword;
+        private GroupBox groupBox1;
+        private CheckBox cbUseProxy;
+        private GroupBox groupBox2;
     }
 }

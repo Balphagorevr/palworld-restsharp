@@ -34,21 +34,22 @@ You can choose to clone this repository and build the library yourself.
 using Palworld.RESTSharp;
 
 // Create a new instance of the PalworldClient
-palworldRESTAPIClient = new PalworldRESTSharpClient("http://127.0.0.1:8000", "MyAdminPassword123");
+palworldRESTAPIClient client = new PalworldRESTSharpClient("http://127.0.0.1:8000", "MyAdminPassword123");
 
 // Get the server information.
-ServerInfo serverInfo = await palworldRESTAPIClient.GetServerInfoASync();
+ServerInfo serverInfo = await client.GetServerInfoASync();
 
 console.WriteLine($serverInfo.serverName);
 
 // Broadcast a message to the in-game chat.
-await palworldRESTAPIClient.BroadcastMessageASync("Hello World!");
+await client.BroadcastMessageASync("Hello World!");
 
 // Get the player list.
-Players palPlayers = await palworldRESTAPIClient.GetPlayersASync();
+Players palPlayers = await client.GetPlayersASync();
 
 // Enumerate the list of online players returned from the server.
 foreach (Player player in palPlayers.players)
+
 {
 	Console.WriteLine(player.name);
 }
@@ -63,3 +64,7 @@ foreach (Player player in palPlayers.players)
 ## :grey_question: Questions/Support
 Feel free to join https://discord.galacticpals.net for assistance or have questions.
 You can open an issue on this repository as well.
+
+If you'd like to leave a tip, you can buy me a Hazelnut Truffle Mocha to keep me awake while coding. :coffee:
+
+<a href='https://ko-fi.com/P5P7VJ0PZ' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>

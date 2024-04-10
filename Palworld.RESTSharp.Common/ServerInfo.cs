@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Palworld.RESTSharp
+namespace Palworld.RESTSharp.Common
 {
     /// <summary>
     /// Information about the Palworld server including name, version, and description of the server.
