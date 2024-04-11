@@ -37,4 +37,12 @@ namespace Palworld.RESTSharp
 
         }
     }
+
+    public class PalworldRESTSharpClientNotFoundException : PalworldRESTSharpClientException
+    {
+        public PalworldRESTSharpClientNotFoundException(string message) : base(message)
+        {
+
+        }
+    }
 }

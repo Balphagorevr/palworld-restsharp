@@ -10,8 +10,13 @@ namespace Palworld.RESTSharp.ProxyService
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.Configure<PalworldRESTSharpProxyConfig>(builder.Configuration.GetSection("PalworldRESTSharpProxyConfig"));
-            builder.Services.AddSingleton(new DatabaseConfiguration("Data Source=Data\\localdata.db"));
+            IConfigurationSection palworldRESTSharpConfigSection = builder.Configuration.GetSection("PalworldRESTSharpProxyConfig");
+
+            builder.Services.Configure<PalworldRESTSharpProxyConfig>(palworldRESTSharpConfigSection);
+            builder.Services.AddSingleton(new DatabaseConfiguration("Data Source=Data\\localdata.db", new Dictionary<string, string>
+            {
+                { "InitialUserToken", palworldRESTSharpConfigSection["PalworldServerAdminPass"] }
+            }));
             builder.Services.AddSingleton<IDataContext, SQLiteDatabaseContext>();
             builder.Services.AddSingleton<IUserRepository, UserRepository>();
             builder.Services.AddSingleton<IUserManager, UserManager>();

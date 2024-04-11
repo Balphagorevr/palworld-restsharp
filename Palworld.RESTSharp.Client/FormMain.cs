@@ -269,24 +269,7 @@ namespace Palworld.RESTSharp.Client
                     apiPassword = txtConfigPassword.Text;
                     palworldRESTAPIClient = new PalworldRESTSharpClient(apiURL, apiPassword);
 
-
-                    if (_usingProxy)
-                    {
-                        User user = await palworldRESTAPIClient.GetUserProfile(apiPassword);
-
-                        if (user == null)
-                        {
-                            MessageBox.Show("Invalid token or you do not have permission to access this resource.", "Unauthorized");
-                            return;
-                        }
-                        else
-                        {
-                            MessageBox.Show($"UserID: {user.ID}\nUsername: {user.UserName}\nRoles: {String.Join(",", user.Roles)}", "Proxy account result");
-                        }
-                    }
-
                     serverInfo = await palworldRESTAPIClient.GetServerInfoASync();
-
 
                     if (serverInfo == null)
                     {

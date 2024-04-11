@@ -7,11 +7,25 @@
 
     public class DatabaseConfiguration : IDatabaseConfiguration
     {
-        public string ConnectionString { get; set; }
+        private Dictionary<string, string> _options { get; set; }
 
-        public DatabaseConfiguration(string connectionString)
+        public string ConnectionString { get; set; }
+        public Dictionary<string, string> Options
+        {
+            get
+            {
+                return _options;
+            }
+            set
+            {
+                _options = value;
+            }
+        }
+
+        public DatabaseConfiguration(string connectionString, Dictionary<string, string> options)
         {
             this.ConnectionString = connectionString;
+            _options = options;
         }
     }
 }

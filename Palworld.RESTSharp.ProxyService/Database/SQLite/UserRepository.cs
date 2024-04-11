@@ -24,29 +24,46 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
         public string TableName { get => "Users"; set { } }
         public string TableColumns { get => "Username, Token, Enabled, Roles, IsDeleted"; set { } }
 
-        public UserRepository() { }
+        public UserRepository()
+        {
+        
+        }
 
         public UserRepository(DatabaseConfiguration databaseConfig)
         {
             dbConfig = databaseConfig;
             SqlMapper.AddTypeHandler(new StringArrayTypeHandler());
-
         }
 
-        public async Task CreateTable(SQLiteConnection connection)
+        public async Task CreateTable(SQLiteConnection connection, DatabaseConfiguration dbConfig)
         {
+            // How to get DB config here?
+
             string createTable = $"BEGIN; CREATE TABLE [{TableName}] ([Username] nvarchar(128) NULL COLLATE NOCASE, [Token] nvarchar(128) NULL COLLATE NOCASE, [Enabled] bit NULL, [Roles] nvarchar(128) NOT NULL, [IsDeleted] BIT NOT NULL DEFAULT 0); CREATE UNIQUE INDEX [idx_UserConst] ON [{TableName}] ([Username] ASC); COMMIT;";
 
             await connection.ExecuteAsync(createTable);
+
+            // Setup default user account.
+            if (dbConfig.Options.TryGetValue("InitialUserToken", out string? token) && !String.IsNullOrEmpty(token))
+            {
+                UserRepository userRepositoryCreate = new UserRepository(dbConfig);
+
+                await userRepositoryCreate.Add(new User()
+                {
+                    UserName = "Admin",
+                    Token = token,
+                    Roles = ["Owner", "Admin"],
+                    Enabled = true
+                });
+
+                Console.WriteLine("Created default user account with token as the server admin password provided in configuration.");
+            }
+            else
+            {
+                throw new Exception("InitialUserToken not found or empty in configuration.");
+            }
         }
 
-        /*
-        public int userID { get; set; }
-        public string UserName { get; set; }
-        public string Token { get; set; }
-        public bool Enabled { get; set; }
-        public List<UserPermission>? Permissions { get; set; }
-         */
         public async Task<int> Add(User user)
         {
             using var connection = new SQLiteConnection(dbConfig.ConnectionString);

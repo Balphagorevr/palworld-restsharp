@@ -30,6 +30,7 @@ namespace Palworld.RESTSharp
         {
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) throw new PalworldRESTSharpClientUnauthorizedException(response.Content.ReadAsStringAsync().Result);
             if (response.StatusCode == System.Net.HttpStatusCode.BadRequest) throw new PalworldRESTSharpClientBadRequestException(response.Content.ReadAsStringAsync().Result);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound) throw new PalworldRESTSharpClientNotFoundException(response.Content.ReadAsStringAsync().Result);
 
             response.EnsureSuccessStatusCode();
         }

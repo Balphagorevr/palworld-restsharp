@@ -17,19 +17,25 @@ namespace Palworld.RESTSharp
         /// URL to the PalServer REST API service.
         /// </summary>
         private string _restAPIURL;
+
         #endregion
 
         #region Public fields
+        /// <summary>
+        /// Configuration and user data retrieved from the proxy server.
+        /// </summary>
+        public PalworldRESTsharpProxyServer ProxyServer { get; internal set; }
 
         /// <summary>
         /// Returns true if the endpoint is the Palworld RESTsharp proxy server.
         /// </summary>
-        public bool ServerIsProxy { get; private set; }
-
-        /// <summary>
-        /// The user that has authenticated with the proxy server.
-        /// </summary>
-        public User LocalUser { get; private set; }
+        public bool UsingProxy
+        {
+            get
+            {
+                return ProxyServer == null ? true : false ;
+            }
+        }
 
         #endregion
 
@@ -64,13 +70,30 @@ namespace Palworld.RESTSharp
         {
             InitializeClient(apiURL, password, timeout);
         }
+        #endregion
 
-        private void InitializeClient(string apiURL, string password, int timeout)
+        #region Helper Methods
+        private async Task InitializeClient(string apiURL, string password, int timeout)
         {
+            
             _restAPIURL = apiURL;
             Timeout = new TimeSpan(0, 0, timeout);
-            BaseAddress = new Uri($"{_restAPIURL}/v1/api/");
-            DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Utils.GetEncodedAuth(password));
+            BaseAddress = new Uri($"{_restAPIURL}");
+
+            string? proxyServerVersion = await GetProxyServiceVersion();
+
+            if (!String.IsNullOrEmpty(proxyServerVersion))
+            {
+                ProxyServer = new PalworldRESTsharpProxyServer();
+
+                ProxyServer.Version = proxyServerVersion;
+
+                DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", password);
+            }
+            else
+            {
+                DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Utils.GetEncodedAuth(password));
+            }
         }
         #endregion
 
@@ -81,7 +104,7 @@ namespace Palworld.RESTSharp
         /// <returns>Server Metric object.</returns>
         public async Task<ServerMetric> GetServerMetricsASync()
         {
-            HttpResponseMessage response = await GetAsync("metrics");
+            HttpResponseMessage response = await GetAsync("v1/api/metrics");
 
             Utils.ValidateResponse(response);
 
@@ -94,7 +117,7 @@ namespace Palworld.RESTSharp
         /// <returns>Server Information object.</returns>
         public async Task<ServerInfo> GetServerInfoASync()
         {
-            HttpResponseMessage response = await GetAsync("info");
+            HttpResponseMessage response = await GetAsync("v1/api/info");
 
             Utils.ValidateResponse(response);
 
@@ -107,7 +130,7 @@ namespace Palworld.RESTSharp
         /// <returns>Array of player objects.</returns>
         public async Task<Players> GetPlayersASync() 
         {
-            HttpResponseMessage response = await GetAsync("players");
+            HttpResponseMessage response = await GetAsync("v1/api/players");
 
             Utils.ValidateResponse(response);
 
@@ -120,7 +143,7 @@ namespace Palworld.RESTSharp
         /// <returns>Sever Settings object with all available values.</returns>
         public async Task<ServerSettings> GetServerSettingsASync()
         {
-            HttpResponseMessage response = await GetAsync("settings");
+            HttpResponseMessage response = await GetAsync("v1/api/settings");
 
             Utils.ValidateResponse(response);
 
@@ -142,7 +165,7 @@ namespace Palworld.RESTSharp
         /// <param name="player">Player object</param>
         public async Task KickPlayerASync(Player player, string message)
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("kick", new PlayerAction(player.userid, message));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/kick", new PlayerAction(player.userid, message));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -160,7 +183,7 @@ namespace Palworld.RESTSharp
         /// <param name="player">Player to ban. Must have Steam ID present.</param>
         public async Task BanPlayerASync(Player player, string message)
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("ban", new PlayerAction(player.userid, message));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/ban", new PlayerAction(player.userid, message));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -178,7 +201,7 @@ namespace Palworld.RESTSharp
         /// <param name="player">Player to unban. Must have Steam ID present.</param>
         public async Task UnbanPlayerASync(Player player)
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("unban", new PlayerAction(player.userid, null));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/unban", new PlayerAction(player.userid, null));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -192,7 +215,7 @@ namespace Palworld.RESTSharp
         /// </summary>
         public async Task SaveWorldASync()
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("save", "");
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/save", "");
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -209,7 +232,7 @@ namespace Palworld.RESTSharp
         {
             if (string.IsNullOrEmpty(message)) throw new ArgumentNullException(nameof(message), "Message cannot be null or empty.");
 
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("announce", new AnnounceMessage(message));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/announce", new AnnounceMessage(message));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -223,7 +246,7 @@ namespace Palworld.RESTSharp
             if (waitTime <= 0) throw new ArgumentOutOfRangeException(nameof(waitTime), "Wait time must be greater than 0.");
             if (string.IsNullOrEmpty(message)) throw new ArgumentNullException(nameof(message), "Message cannot be null or empty.");
 
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("shutdown", new ShutdownRequest(waitTime, message));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/shutdown", new ShutdownRequest(waitTime, message));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -237,7 +260,7 @@ namespace Palworld.RESTSharp
         /// </remarks>
         public async Task StopServerASync()
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("stop", new {});
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/stop", new {});
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -245,9 +268,21 @@ namespace Palworld.RESTSharp
         #endregion
 
         #region Proxy Endpoints
+
+        public async Task<string?> GetProxyServiceVersion()
+        {
+            HttpResponseMessage response = await GetAsync("api/proxyservice/version");
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+
+            Utils.ValidateResponse(response);
+
+            return await response.Content.ReadAsStringAsync();
+        }
+
         public async Task<User> GetUserProfile(string userToken)
         {
-            HttpResponseMessage response = await GetAsync("user/profile");
+            HttpResponseMessage response = await GetAsync("api/user/profile");
 
             Utils.ValidateResponse(response);
 

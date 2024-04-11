@@ -88,7 +88,7 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
                     Token = userToken
                 });
 
-                if (user == null) return NotFound("User not found.");
+                if (user == null) return NotFound("User token not found.");
 
                 return Ok(user);
             }

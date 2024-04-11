@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Palworld.RESTSharp.Common;
 using System.Data.SQLite;
 
 namespace Palworld.RESTSharp.ProxyService.Database.SQLite
@@ -33,7 +34,8 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
 
                 if (string.IsNullOrEmpty(table))
                 {
-                    repository.CreateTable(connection);
+                    Console.WriteLine($"Creating table {repository.TableName}");
+                    repository.CreateTable(connection,dbConfig);
                     Console.WriteLine($"Created table {repository.TableName}");
                 }
             }
