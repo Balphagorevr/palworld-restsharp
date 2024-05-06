@@ -1,18 +1,5 @@
-﻿/*
-TABLE: TABLE_USERS
-BEGIN; 
-CREATE TABLE [Users] 
-(
-    [Username] nvarchar(128) NULL COLLATE NOCASE, 
-    [Token] nvarchar(128) NULL COLLATE NOCASE, 
-    [Enabled] bit NULL
-); 
-
-CREATE UNIQUE INDEX [idx_UserConst] ON [Users] ([Username] ASC); COMMIT;";
-
- */
-using Dapper;
-using Palworld.RESTSharp.Common;
+﻿using Dapper;
+using Palworld.RESTSharp.ProxyServer;
 using System.Data.SQLite;
 
 namespace Palworld.RESTSharp.ProxyService.Database.SQLite
@@ -22,7 +9,7 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
         private readonly DatabaseConfiguration dbConfig;
 
         public string TableName { get => "Users"; set { } }
-        public string TableColumns { get => "Username, Token, Enabled, Roles, IsDeleted"; set { } }
+        public string TableColumns { get => "Username, Password, Enabled, Role, IsDeleted"; set { } }
 
         public UserRepository()
         {
@@ -32,27 +19,26 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
         public UserRepository(DatabaseConfiguration databaseConfig)
         {
             dbConfig = databaseConfig;
-            SqlMapper.AddTypeHandler(new StringArrayTypeHandler());
         }
 
         public async Task CreateTable(SQLiteConnection connection, DatabaseConfiguration dbConfig)
         {
             // How to get DB config here?
 
-            string createTable = $"BEGIN; CREATE TABLE [{TableName}] ([Username] nvarchar(128) NULL COLLATE NOCASE, [Token] nvarchar(128) NULL COLLATE NOCASE, [Enabled] bit NULL, [Roles] nvarchar(128) NOT NULL, [IsDeleted] BIT NOT NULL DEFAULT 0); CREATE UNIQUE INDEX [idx_UserConst] ON [{TableName}] ([Username] ASC); COMMIT;";
+            string createTable = $"BEGIN; CREATE TABLE [{TableName}] ([Username] nvarchar(128) NULL COLLATE NOCASE, [Password] nvarchar(128) NULL COLLATE NOCASE, [Enabled] bit NULL, [Role] TINYINT NOT NULL, [IsDeleted] BIT NOT NULL DEFAULT 0); CREATE UNIQUE INDEX [idx_UserConst] ON [{TableName}] ([Username] ASC); COMMIT;";
 
             await connection.ExecuteAsync(createTable);
 
             // Setup default user account.
-            if (dbConfig.Options.TryGetValue("InitialUserToken", out string? token) && !String.IsNullOrEmpty(token))
+            if (dbConfig.Options.TryGetValue("InitialUserToken", out string? password) && !String.IsNullOrEmpty(password))
             {
                 UserRepository userRepositoryCreate = new UserRepository(dbConfig);
 
                 await userRepositoryCreate.Add(new User()
                 {
-                    UserName = "Admin",
-                    Token = token,
-                    Roles = ["Owner", "Admin"],
+                    Username = "Admin",
+                    Password = password,
+                    Role = UserAccessLevel.Owner,
                     Enabled = true
                 });
 
@@ -67,9 +53,7 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
         public async Task<int> Add(User user)
         {
             using var connection = new SQLiteConnection(dbConfig.ConnectionString);
-            //if (this.Get(user) != null) { throw new Exception("User already exists."); }
-
-            return await connection.ExecuteScalarAsync<int>($"INSERT INTO {TableName}({TableColumns}) VALUES (@UserName, @Token, @Enabled, @Roles, 0); SELECT last_insert_rowid()", user);
+            return await connection.ExecuteScalarAsync<int>($"INSERT INTO {TableName}({TableColumns}) VALUES (@Username, @Password, @Enabled, @Role, 0); SELECT last_insert_rowid()", user);
         }
 
         public async Task<bool> Delete(int ID)
@@ -89,7 +73,7 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
         {
             using var connection = new SQLiteConnection(dbConfig.ConnectionString);
 
-            return await connection.QueryFirstOrDefaultAsync<User>($"SELECT rowid AS ID, * FROM {TableName} WHERE (Token = @Token OR rowid = @ID) AND IsDeleted = 0", user);
+            return await connection.QueryFirstOrDefaultAsync<User>($"SELECT rowid AS ID, * FROM {TableName} WHERE (Password = @Password OR rowid = @ID) AND IsDeleted = 0", user);
         }
 
         public async Task<IEnumerable<User>> Get()
@@ -104,9 +88,16 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
         public async Task<bool> UpdateUser(User user)
         {
             using var connection = new SQLiteConnection(dbConfig.ConnectionString);
-            bool updated = await connection.ExecuteAsync($"UPDATE {TableName} SET UserName = @UserName, Token = @Token, Enabled = @Enabled, Roles = @Roles WHERE (rowid = @ID OR Token = @Token) AND IsDeleted = 0", user) == 1 ? true : false;
+            bool updated = await connection.ExecuteAsync($"UPDATE {TableName} SET UserName = @Username, Password = @Password, Enabled = @Enabled, Role = @Role WHERE (rowid = @ID OR Password = @Password) AND IsDeleted = 0", user) == 1 ? true : false;
 
             return updated;
+        }
+        public async Task<UserAccessLevel> GetAccessLevel(User user)
+        {
+            using var connection = new SQLiteConnection(dbConfig.ConnectionString);
+            UserAccessLevel level = await connection.ExecuteScalarAsync<UserAccessLevel>($"SELECT Role FROM {TableName} WHERE Password = @Password AND IsDeleted = 0", user);
+
+            return level;
         }
     }
 }

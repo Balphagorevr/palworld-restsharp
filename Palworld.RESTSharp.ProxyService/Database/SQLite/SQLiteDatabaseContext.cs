@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using Palworld.RESTSharp.Common;
 using System.Data.SQLite;
 
 namespace Palworld.RESTSharp.ProxyService.Database.SQLite
@@ -15,6 +14,11 @@ namespace Palworld.RESTSharp.ProxyService.Database.SQLite
 
         public void Setup()
         {
+            if (!Directory.Exists("/Data"))
+            {
+                Directory.CreateDirectory("Data");
+            }
+
             using var connection = new SQLiteConnection(dbConfig.ConnectionString);
             CheckTable(connection);
         }

@@ -5,11 +5,11 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <Title>Palworld REST API Library</Title>
+    <Title>Palworld RESTSharp Library</Title>
     <Authors>BalphagoreVR</Authors>
-    <Description>A C# .NET standard library for communicating with Palworld server REST API Service.</Description>
+    <Description>A C# .NET Standard library for communicating with Palworld server REST API service.</Description>
     <AnalysisLevel>none</AnalysisLevel>
-    <PackageReleaseNotes>Updated build configuration.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added support for Palworld RESTSharp Proxy Server. Contains a number of bugfixes and improvements.</PackageReleaseNotes>
     <PackageTags>Palworld,REST,API,PalworldRESTAPI,RESTAPI</PackageTags>
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright© Malstech, BalphagoreVR</Copyright>
@@ -17,7 +17,7 @@
     <PackageProjectUrl>https://github.com/Balphagorevr/palworld-restsharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Balphagorevr/palworld-restsharp</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-	<AssemblyVersion>1.0.2</AssemblyVersion>
+	<AssemblyVersion>1.0.4</AssemblyVersion>
 	<FileVersion>$(AssemblyVersion)</FileVersion>
 	<PackageVersion>$(AssemblyVersion)</PackageVersion>
 	<Version>$(AssemblyVersion)</Version>
@@ -50,10 +50,6 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Palworld.RESTSharp.Common\Palworld.RESTSharp.Common.csproj" />
   </ItemGroup>
 
 </Project>

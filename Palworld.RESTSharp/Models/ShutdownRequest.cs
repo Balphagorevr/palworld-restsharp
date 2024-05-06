@@ -1,4 +1,6 @@
-﻿namespace Palworld.RESTSharp.Common
+﻿using Newtonsoft.Json;
+
+namespace Palworld.RESTSharp
 {
     /// <summary>
     /// For requesting server to shutdown.
@@ -8,16 +10,18 @@
         /// <summary>
         /// Wait time in seconds.
         /// </summary>
-        public int waittime { get; set; }
+        [JsonProperty("waittime")]
+        public int WaitTime { get; set; }
         /// <summary>
         /// Message to display for server shutdown.
         /// </summary>
-        public string message { get; set; }
+        [JsonProperty("Message")]
+        public string Message { get; set; }
 
         public ShutdownRequest(int waittime, string message)
         {
-            this.waittime = waittime;
-            this.message = message;
+            WaitTime = waittime;
+            Message = message;
         }
     }
 }

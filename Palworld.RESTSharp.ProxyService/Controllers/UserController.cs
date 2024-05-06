@@ -1,31 +1,25 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Palworld.RESTSharp.Common;
+using Palworld.RESTSharp.ProxyServer;
 
 namespace Palworld.RESTSharp.ProxyService.Controllers
 {
     [Route("v1/api/[controller]")]
     public class UserController : ControllerBase
     {
-        PalworldRESTSharpProxyConfig _config;
         IUserManager userManager;
 
-        public UserController(
-            IConfiguration config,
-            IUserManager userManager
-            )
+        public UserController(IUserManager userManager)
         {
-            _config = config.GetSection("PalworldRESTSharpProxyConfig").Get<PalworldRESTSharpProxyConfig>();
             this.userManager = userManager;
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateUser([FromBody] User user)
+        [HttpPost("add")]
+        public async Task<IActionResult> AddUser([FromBody] User user)
         {
             try
             {
-                if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+                if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
 
-                user.Token = Guid.NewGuid().ToString();
                 user.ID = await userManager.Add(user);
 
                 return Ok(user);
@@ -41,7 +35,7 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         {
             try
             {
-                if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+                if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
 
                 return Ok(await userManager.Get());
             }
@@ -57,11 +51,11 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         {
             try
             {
-                if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+                if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
 
                 User user = await userManager.Get(new User()
                 {
-                    Token = token
+                    Password = token
                 });
 
                 if (user == null) return NotFound("User not found.");
@@ -79,13 +73,12 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         {
             try
             {
-                
                 string userToken = Request.Headers["Authorization"];
                 userToken = userToken.Replace("Bearer ", "").Replace("Basic ", "");
 
                 User user = await userManager.Get(new User()
                 {
-                    Token = userToken
+                    Password = userToken
                 });
 
                 if (user == null) return NotFound("User token not found.");
@@ -103,7 +96,7 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         {
             try
             {
-                if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+                if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
 
                 await userManager.UpdateUser(user);
 
@@ -121,13 +114,13 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         {
             try
             {
-                if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+                if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
 
                 bool isDeleted = await userManager.Delete(userID);
 
                 if (!isDeleted) return NotFound("User not found.");
 
-                return Ok("User deleted.");
+                return Ok(isDeleted);
             }
             catch(Exception ex)
             {
@@ -135,7 +128,7 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             }
         }
 
-        private async Task<bool> AuthorizeUser(string[] roles)
+        private async Task<bool> AuthenticateUser(UserAccessLevel level)
         {
             string userToken = Request.Headers["Authorization"];
             if (String.IsNullOrEmpty(userToken))
@@ -144,7 +137,10 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             }
 
             userToken = userToken.Replace("Bearer ", "");
-            return await userManager.TokenHasRoles(userToken, roles);
+            return await userManager.GetAccessLevel(new User()
+            {
+                Password = userToken
+            }) <= level;
         }
     }
 }

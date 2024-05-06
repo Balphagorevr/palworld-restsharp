@@ -18,9 +18,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFiles", "SolutionFi
 		RestSharpLogo.ico = RestSharpLogo.ico
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Palworld.RESTSharp.ProxyService", "Palworld.RESTSharp.ProxyService\Palworld.RESTSharp.ProxyService.csproj", "{B98D7CF8-24C8-4946-8E09-116D3E8B3F98}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Palworld.RESTSharp.ProxyService", "Palworld.RESTSharp.ProxyService\Palworld.RESTSharp.ProxyService.csproj", "{B98D7CF8-24C8-4946-8E09-116D3E8B3F98}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Palworld.RESTSharp.Common", "Palworld.RESTSharp.Common\Palworld.RESTSharp.Common.csproj", "{2DFA46B6-2DC4-4F2A-AFBB-5621D9FD8B56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Palworld.RESTSharp.Tests", "Palworld.RESTSharp.Tests\Palworld.RESTSharp.Tests.csproj", "{75926645-3774-4B1F-ACFB-EC840EEDBA40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -40,10 +40,10 @@ Global
 		{B98D7CF8-24C8-4946-8E09-116D3E8B3F98}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B98D7CF8-24C8-4946-8E09-116D3E8B3F98}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B98D7CF8-24C8-4946-8E09-116D3E8B3F98}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2DFA46B6-2DC4-4F2A-AFBB-5621D9FD8B56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2DFA46B6-2DC4-4F2A-AFBB-5621D9FD8B56}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2DFA46B6-2DC4-4F2A-AFBB-5621D9FD8B56}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2DFA46B6-2DC4-4F2A-AFBB-5621D9FD8B56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75926645-3774-4B1F-ACFB-EC840EEDBA40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75926645-3774-4B1F-ACFB-EC840EEDBA40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75926645-3774-4B1F-ACFB-EC840EEDBA40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75926645-3774-4B1F-ACFB-EC840EEDBA40}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

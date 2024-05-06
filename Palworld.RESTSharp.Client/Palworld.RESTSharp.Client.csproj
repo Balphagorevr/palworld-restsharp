@@ -7,13 +7,18 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>RestSharpLogo.ico</ApplicationIcon>
-	<AssemblyVersion>1.0.1</AssemblyVersion>
-	<FileVersion>1.0.1</FileVersion>
-	<Version>1.0.1</Version>
+	<AssemblyVersion>1.1.0</AssemblyVersion>
+	<FileVersion>1.1.0</FileVersion>
+	<Version>1.1.0</Version>
+	<StartupObject>Palworld.RESTSharp.Client.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="RestSharpLogo.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.4" />
   </ItemGroup>
 
   <ItemGroup>

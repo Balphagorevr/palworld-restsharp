@@ -1,588 +1,245 @@
-using Palworld.RESTSharp.Common;
-using System.Net.Http.Headers;
+﻿using Palworld.RESTSharp.ProxyServer;
+using System.Configuration;
 
 namespace Palworld.RESTSharp.Client
 {
     public partial class FormMain : Form
     {
-        string selectedPage;
-        string apiURL;
-        string apiPassword;
-        bool _connected;
-        bool _usingProxy;
-        const string _defaultTitle = "Palworld REST Client";
-        PalworldRESTSharpClient palworldRESTAPIClient;
-        Players players;
+        private PalworldRESTSharpClient palAPIClient;
+        private User localProxyUser;
 
-        // Re-used controls
-        TextBox txtBroadcastMessage;
-        TextBox txtReasonMessage;
-        TextBox txtUnbanPlayerID;
-        TextBox txtResponse;
-        ServerInfo serverInfo;
-
-        ComboBox comboUserList;
-        Label lblplayerName;
-        Label lblReason;
-        NumericUpDown shutdownDelay;
-        ContextMenuStrip userContextMenu;
-        HttpClient proxyHttpClient;
-        DataGridViewCell selectedUserCell;
+        private ProxyServerManager proxyServerPage;
+        private UserManager userManagerPage;
+        private PlayerManager playerManagerPage;
+        private ServerManager serverManagerPage;
+        private BroadcastManager broadcastManagerPage;
+        private ServerMetricsPage serverMetricsPage;
+        private ServerSettingsPage serverSettingsPage;
+        private UnbanUserPage unbanUserPage;
+        private StopServerPage stopServerPage;
+        private ShutdownServerPage shutdownServerPage;
+        private SaveWorldPage saveWorldPage;
+        private AuditPage auditPage;
 
         public FormMain()
         {
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        public delegate void ProgressDelegate(int progress);
+
+        private void FormMain_Load(object sender, EventArgs e)
         {
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.Text = "Palworld REST Client";
             this.MaximizeBox = false;
-            btnExecute.Enabled = false;
-            SetupNavigationTree();
-            txtResponse = new TextBox();
-            tAPIOptions.Visible = false;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
 
-            ToolStripMenuItem itemKick = new ToolStripMenuItem("Kick Player");
-            ToolStripMenuItem itemBan = new ToolStripMenuItem("Ban Player");
-            ToolStripMenuItem itemcopyID = new ToolStripMenuItem("Copy Selected Value");
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            ConfigurationSection configurationSection = config.GetSection("appSettings");
 
-            userContextMenu = new ContextMenuStrip();
-            userContextMenu.Items.AddRange(new ToolStripItem[] { itemKick, itemBan, itemcopyID });
 
-            itemcopyID.Click += new EventHandler(CopyIDClick);
-            itemBan.Click += new EventHandler(BanPlayerClick);
-            itemKick.Click += new EventHandler(KickPlayerClick);
+            if (!configurationSection.SectionInformation.IsProtected)
+            {
+                configurationSection.SectionInformation.ProtectSection("DataProtectionConfigurationProvider");
+                config.Save();
+            }
+            txtAPIEndpoint.Text = ConfigurationManager.AppSettings["apiURL"];
+            txtPasswordToken.Text = ConfigurationManager.AppSettings["passwordToken"];
+            cbUseProxy.Checked = bool.Parse(ConfigurationManager.AppSettings["useProxy"]);
+            menuTree.Visible = false;
+
         }
 
-        private void CopyIDClick(object sender, EventArgs e)
+        #region Utility
+
+        private void UpdateSetting(string key, string data)
         {
-            if (selectedUserCell != null)
+            var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            var settings = configFile.AppSettings.Settings;
+
+            settings[key].Value = data;
+
+            configFile.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
+        }
+
+        #endregion
+
+        #region Events
+        protected void ProxyServerPage_LogoutClicked(object sender, EventArgs e)
+        {
+            panelConfig.Controls.Clear();
+            panelConfig.Controls.Add(connectPanel);
+            menuTree.Visible = false;
+            connectPanel.Show();
+            SetStatusText("Logged out.");
+            this.Text = $"Palworld REST Client";
+        }
+
+        private async void btnLogin_Click(object sender, EventArgs e)
+        {
+            try
             {
-                string idToCopy = selectedUserCell.Value.ToString();
-                Clipboard.SetText(idToCopy);
+                if (String.IsNullOrEmpty(txtAPIEndpoint.Text) || String.IsNullOrEmpty(txtPasswordToken.Text))
+                {
+                    MessageBox.Show("Please enter API Endpoint and Password Token.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                SetStatusText("Connecting...");
+                UpdateSetting("apiURL", txtAPIEndpoint.Text);
+                UpdateSetting("passwordToken", txtPasswordToken.Text);
+                UpdateSetting("useProxy", cbUseProxy.Checked.ToString());
+
+                palAPIClient = new PalworldRESTSharpClient(txtAPIEndpoint.Text, txtPasswordToken.Text, cbUseProxy.Checked);
+
+                SetStatusText("Connected to Palworld server REST API.");
+
+                if (palAPIClient.UsingProxy)
+                {
+                    localProxyUser = palAPIClient.ProxyServer.ProxyUser;
+
+                    SetStatusText("Connected to proxy server.");
+                }
+
+                connectPanel.Hide();
+                userManagerPage = new UserManager(palAPIClient);
+                proxyServerPage = new ProxyServerManager(palAPIClient);
+                proxyServerPage.logoutClicked += ProxyServerPage_LogoutClicked;
+
+                playerManagerPage = new PlayerManager(palAPIClient);
+                serverManagerPage = new ServerManager(palAPIClient);
+                broadcastManagerPage = new BroadcastManager(palAPIClient);
+                serverMetricsPage = new ServerMetricsPage(palAPIClient);
+                serverSettingsPage = new ServerSettingsPage(palAPIClient);
+                unbanUserPage = new UnbanUserPage(palAPIClient);
+                stopServerPage = new StopServerPage(palAPIClient);
+                shutdownServerPage = new ShutdownServerPage(palAPIClient);
+                saveWorldPage = new SaveWorldPage(palAPIClient);
+                auditPage = new AuditPage(palAPIClient);
+
+                CreateNavItems();
+
+                this.Text = $"Palworld REST Client | {palAPIClient.PalServerInfo.ServerName}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                SetStatusText("An error has occured.");
             }
         }
 
-        private void KickPlayerClick(object sender, EventArgs e)
+        #endregion
+
+        private void CreateNavItems()
         {
-
-        }
-
-        private void BanPlayerClick(object sender, EventArgs e)
-        {
-
-        }
-
-        private void SetupNavigationTree()
-        {
-            TreeNode proxyServerConfig = new TreeNode("Proxy Server Configuration");
-            TreeNode configureNode = new TreeNode("Client Configuration");
-            tAPIOptions.Nodes.Add(configureNode);
-
-            TreeNode ServerManagement = new TreeNode("Server Management");
-            TreeNode broadcastMessage = new TreeNode("Broadcast Message");
-            TreeNode HomeGetInfoNode = new TreeNode("Get Server Info");
-            TreeNode getServerMetrics = new TreeNode("Get Server Metrics");
-            TreeNode getServerSettings = new TreeNode("Get Server Settings");
-            TreeNode saveWorld = new TreeNode("Save World");
-            TreeNode Shutdown = new TreeNode("Shutdown Server");
-            TreeNode StopServer = new TreeNode("Stop Server");
-            tAPIOptions.Nodes.Add(ServerManagement);
-            ServerManagement.Nodes.Add(broadcastMessage);
-            ServerManagement.Nodes.Add(HomeGetInfoNode);
-            ServerManagement.Nodes.Add(getServerSettings);
-            ServerManagement.Nodes.Add(getServerMetrics);
-            ServerManagement.Nodes.Add(saveWorld);
-            ServerManagement.Nodes.Add(Shutdown);
-            ServerManagement.Nodes.Add(StopServer);
-
-            TreeNode PlayerManagement = new TreeNode("Player Management");
-            TreeNode getPlayers = new TreeNode("Get Players");
-            TreeNode kickPlayer = new TreeNode("Kick Player");
-            TreeNode banPlayer = new TreeNode("Ban Player");
-            TreeNode unBanPlayer = new TreeNode("Unban Player");
-            PlayerManagement.Nodes.Add(getPlayers);
-            PlayerManagement.Nodes.Add(kickPlayer);
-            PlayerManagement.Nodes.Add(banPlayer);
-            PlayerManagement.Nodes.Add(unBanPlayer);
-
-            tAPIOptions.Nodes.Add(PlayerManagement);
-            tAPIOptions.ExpandAll();
-        }
-
-        private void tAPIOptions_AfterSelectAsync(object sender, TreeViewEventArgs e)
-        {
-            pageConfigure.Visible = false;
-            panelRequestParameters.Controls.Clear();
-            selectedPage = e.Node.Text;
-            lblHeader.Text = selectedPage;
-
-            switch (selectedPage)
+            menuTree.Visible = true;
+            
+            if (palAPIClient.UsingProxy)
             {
-                case "Client Configuration":
-                    pageConfigure.Visible = true;
+                UserAccessLevel accessLevel = localProxyUser.Role;
+                if (accessLevel > UserAccessLevel.Owner)
+                {
+                    menuTree.Nodes["nProxyServer"].Nodes.RemoveByKey("nProxyUserManagement");
+                    menuTree.Nodes["nProxyServer"].Nodes.RemoveByKey("nUserAuditLog");
+                }
+
+                if (accessLevel > UserAccessLevel.Admin)
+                {
+                    menuTree.Nodes["nServerManagement"].Nodes.RemoveByKey("nSaveWorld");
+                    menuTree.Nodes["nServerManagement"].Nodes.RemoveByKey("nStopServer");
+                    menuTree.Nodes["nServerManagement"].Nodes.RemoveByKey("nShutdownServer");
+                    menuTree.Nodes["nServerManagement"].Nodes.RemoveByKey("nBroadcastMessage");
+                    menuTree.Nodes["nServerManagement"].Nodes.RemoveByKey("nServerSettings");
+                    menuTree.Nodes["nPlayerManagement"].Nodes.RemoveByKey("nUnbanPlayer");
+                }
+
+                if (accessLevel > UserAccessLevel.Moderator)
+                {
+                    menuTree.Nodes.RemoveByKey("nPlayerManagement");
+                }
+            } else
+            {
+                menuTree.Nodes.RemoveByKey("nProxyServer");
+            }
+
+            //menuTree.Nodes["nProxyServer"].Remove();
+            menuTree.SelectedNode = menuTree.Nodes[0];
+            menuTree.ExpandAll();
+        }
+
+
+        private void menuTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            ShowPage(e.Node.Text);
+        }
+
+        private void ShowPage(string pageName)
+        {
+            panelConfig.Controls.Clear();
+
+            switch (pageName)
+            {
+                case "Proxy Server":
+                    proxyServerPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(proxyServerPage);
                     break;
-                case "Get Server Info":
+                case "User Management":
+                    userManagerPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(userManagerPage);
                     break;
-                case "Get Players":
+                case "Player Management":
+                    playerManagerPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(playerManagerPage);
+                    break;
+                case "Server Management":
+                    serverManagerPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(serverManagerPage);
                     break;
                 case "Broadcast Message":
-                    Label lblBroadcastMessage = new Label();
-                    lblBroadcastMessage.Text = "Message";
-                    lblBroadcastMessage.Dock = DockStyle.Top;
-                    txtBroadcastMessage = new TextBox();
-                    txtBroadcastMessage.Dock = DockStyle.Fill;
-                    txtBroadcastMessage.Multiline = true;
-                    txtBroadcastMessage.PlaceholderText = "Enter message to broadcast";
-
-                    panelRequestParameters.Controls.Add(txtBroadcastMessage);
-                    panelRequestParameters.Controls.Add(lblBroadcastMessage);
+                    broadcastManagerPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(broadcastManagerPage);
                     break;
-
-                case "Kick Player":
-
-                    if (players == null)
-                    {
-                        MessageBox.Show("You must get players first.", "Must Select Players");
-                        return;
-                    }
-                    lblplayerName = new Label() { Text = "Reason" };
-                    lblReason = new Label() { Text = "Player Name" };
-                    txtReasonMessage = new TextBox();
-                    txtReasonMessage.PlaceholderText = "Enter reason for kick";
-
-                    comboUserList.DropDownStyle = ComboBoxStyle.DropDownList;
-
-                    txtReasonMessage.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(txtReasonMessage);
-
-                    lblplayerName.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(lblplayerName);
-
-                    comboUserList.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(comboUserList);
-
-                    lblReason.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(lblReason);
-
+                case "Server Metrics":
+                    serverMetricsPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(serverMetricsPage);
                     break;
-                case "Ban Player":
-
-                    if (players == null)
-                    {
-                        MessageBox.Show("You must get players first.", "Must Select Players");
-                        return;
-                    }
-
-                    lblplayerName = new Label() { Text = "Reason" };
-                    lblReason = new Label() { Text = "Player Name" };
-
-                    comboUserList.DropDownStyle = ComboBoxStyle.DropDownList;
-                    txtReasonMessage = new TextBox();
-                    txtReasonMessage.Dock = DockStyle.Top;
-                    txtReasonMessage.PlaceholderText = "Enter reason for ban";
-                    panelRequestParameters.Controls.Add(txtReasonMessage);
-
-                    lblplayerName.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(lblplayerName);
-
-                    comboUserList.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(comboUserList);
-
-                    lblReason.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(lblReason);
-
+                case "Server Settings":
+                    serverSettingsPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(serverSettingsPage);
                     break;
-
                 case "Unban Player":
-                    lblplayerName = new Label() { Text = "Player ID" };
-                    txtUnbanPlayerID = new TextBox();
-                    txtUnbanPlayerID.PlaceholderText = "steam_xxxxxxxxxxxxx";
-
-                    txtUnbanPlayerID.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(txtUnbanPlayerID);
-
-                    lblplayerName.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(lblplayerName);
+                    unbanUserPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(unbanUserPage);
+                    break;
+                case "Stop Server":
+                    stopServerPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(stopServerPage);
                     break;
                 case "Shutdown Server":
-                    txtReasonMessage = new TextBox();
-                    lblReason = new Label() { Text = "Shutdown Message" };
-                    Label lblDelay = new Label() { Text = "Delay (Seconds)" };
-
-                    txtReasonMessage.Dock = DockStyle.Top;
-                    txtReasonMessage.PlaceholderText = "Enter reason for shutdown";
-                    panelRequestParameters.Controls.Add(txtReasonMessage);
-
-                    lblReason.Dock = DockStyle.Top;
-                    panelRequestParameters.Controls.Add(lblReason);
-
-                    shutdownDelay = new NumericUpDown();
-                    shutdownDelay.Dock = DockStyle.Top;
-                    shutdownDelay.Minimum = 1;
-                    panelRequestParameters.Controls.Add(shutdownDelay);
-
-                    panelRequestParameters.Controls.Add(lblDelay);
-                    lblDelay.Dock = DockStyle.Top;
-
+                    shutdownServerPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(shutdownServerPage);
+                    break;
+                case "Save World":
+                    saveWorldPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(saveWorldPage);
+                    break;
+                case "User Audit Log":
+                    auditPage.Dock = DockStyle.Fill;
+                    panelConfig.Controls.Add(auditPage);
                     break;
             }
         }
-        private void pageConfigure_Paint(object sender, PaintEventArgs e)
-        {
 
+        // Set status strip status
+        private void SetStatusText(string status)
+        {
+            tsLastAction.Text = status;
         }
 
-        private void DataGridview1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        public void DisplayError(string message)
         {
-            if (e.RowIndex != -1) // Check if it's not a header cell
-            {
-                DataGridView dgv = sender as DataGridView;
-                if (dgv != null && dgv.Columns[e.ColumnIndex] is DataGridViewColumn && e.RowIndex >= 0)
-                {
-                    DataGridViewCell cell = dgv[e.ColumnIndex, e.RowIndex];
-                    if (cell != null && cell.ContentBounds.Contains(dgv.PointToClient(Cursor.Position)))
-                    {
-                        if (MouseButtons.Right == Control.MouseButtons)
-                        {
-                            userContextMenu.Show(Cursor.Position);
-                        }
-                    }
-                }
-            }
-        }
-
-        private async void btnSaveConfig_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (!_connected)
-                {
-                    if (txtconfigURL.Text == "" || txtConfigPassword.Text == "")
-                    {
-                        MessageBox.Show("URL and Password required");
-                        return;
-                    }
-
-                    apiURL = txtconfigURL.Text;
-                    apiPassword = txtConfigPassword.Text;
-                    palworldRESTAPIClient = new PalworldRESTSharpClient(apiURL, apiPassword);
-
-                    serverInfo = await palworldRESTAPIClient.GetServerInfoASync();
-
-                    if (serverInfo == null)
-                    {
-                        throw new Exception("Failed to get sever information.");
-                    }
-
-                    btnExecute.Enabled = true;
-                    btnSaveConfig.Text = "Disconnect";
-                    connectionStatus.Text = "Connected.";
-                    txtconfigURL.ReadOnly = true;
-                    txtConfigPassword.ReadOnly = true;
-                    tAPIOptions.Visible = true;
-                    this.Text = _defaultTitle;
-                    _connected = true;
-                    this.Text = _defaultTitle + $" - {serverInfo.serverName}";
-
-                    UpdateServerMetricCounterAsync();
-                }
-                else // Disconnected
-                {
-                    txtconfigURL.ReadOnly = false;
-                    txtConfigPassword.ReadOnly = false;
-                    tAPIOptions.Visible = false;
-                    connectionStatus.Text = "Disconnected.";
-                    btnSaveConfig.Text = "Connect";
-                    _connected = false;
-                    this.Text = _defaultTitle;
-                }
-            }
-            catch (PalworldRESTSharpClientUnauthorizedException pex)
-            {
-                MessageBox.Show(pex.Message, "Invalid Password");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error connecting");
-            }
-        }
-
-        private async Task UpdateServerMetricCounterAsync()
-        {
-            while (_connected && cbTrackMetrics.Checked)
-            {
-                ServerMetric serverMetric = await palworldRESTAPIClient.GetServerMetricsASync();
-                if (serverMetric != null)
-                {
-                    stsPlayerCount.Text = $"Players: {serverMetric.totalPlayers}/{serverMetric.maxPlayers}";
-                    stsServerUptimeAndFPS.Text = $"Uptime: {serverMetric.GetUptimeString()} | FPS: {serverMetric.serverFPS}";
-                }
-                await Task.Delay(1000);
-            }
-
-            stsPlayerCount.Text = "";
-            stsServerUptimeAndFPS.Text = "";
-        }
-
-        private async void Execute()
-        {
-            try
-            {
-                panelResponse.Controls.Clear();
-                switch (selectedPage)
-                {
-                    case "Client Configuration":
-                        MessageBox.Show("Configuration Applied.");
-                        break;
-                    case "Get Server Info":
-                        if (serverInfo != null)
-                        {
-                            ListBox lblServerInfo = new ListBox();
-                            lblServerInfo.Dock = DockStyle.Fill;
-                            lblServerInfo.Items.Add($"Name: {serverInfo.serverName}");
-                            lblServerInfo.Items.Add($"Version: {serverInfo.version}");
-                            lblServerInfo.Items.Add($"Description: {serverInfo.description}");
-
-                            panelResponse.Controls.Add(lblServerInfo);
-                        }
-
-                        break;
-                    case "Get Players":
-                        players = await palworldRESTAPIClient.GetPlayersASync();
-
-                        if (players != null)
-                        {
-                            DataGridView dgvPlayers = new DataGridView();
-                            dgvPlayers.Dock = DockStyle.Fill;
-                            dgvPlayers.ReadOnly = true;
-                            dgvPlayers.AutoGenerateColumns = true;
-                            dgvPlayers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                            dgvPlayers.DataSource = players.players;
-                            dgvPlayers.MultiSelect = false;
-                            dgvPlayers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                            dgvPlayers.CellContextMenuStripNeeded += (s, e) =>
-                            {
-                                if (e.RowIndex != -1 && e.ColumnIndex >= 0)
-                                {
-                                    selectedUserCell = dgvPlayers[e.ColumnIndex, e.RowIndex];
-                                    dgvPlayers.Rows[e.RowIndex].Selected = true;
-                                    e.ContextMenuStrip = userContextMenu;
-                                }
-                            };
-                            dgvPlayers.CellContentClick += DataGridview1_CellContentClick;
-                            panelResponse.Controls.Add(dgvPlayers);
-
-                            // Create and populate combo box from the user list.
-                            comboUserList = new ComboBox();
-                            comboUserList.DataSource = players.players;
-                            comboUserList.DisplayMember = "name";
-                            comboUserList.ValueMember = "steamID";
-
-                        }
-
-                        break;
-                    case "Get Server Metrics":
-                        ServerMetric serverMetric = await palworldRESTAPIClient.GetServerMetricsASync();
-
-                        if (serverMetric != null)
-                        {
-                            // Best way to show fields from class in a list box.
-                            ListBox lbServerMetrics = new ListBox();
-                            lbServerMetrics.Dock = DockStyle.Fill;
-                            lbServerMetrics.Items.Add($"FPS: {serverMetric.serverFPS}");
-                            lbServerMetrics.Items.Add($"Total Players: {serverMetric.totalPlayers}");
-                            lbServerMetrics.Items.Add($"Frame Rate: {serverMetric.serverFrameRate}");
-                            lbServerMetrics.Items.Add($"Max Players: {serverMetric.maxPlayers}");
-                            lbServerMetrics.Items.Add($"Uptime: {serverMetric.upTime}");
-
-                            stsPlayerCount.Text = $"Players: {serverMetric.totalPlayers}/{serverMetric.maxPlayers}";
-                            stsServerUptimeAndFPS.Text = $"Uptime: {serverMetric.GetUptimeString()} | FPS: {serverMetric.serverFPS}";
-                            panelResponse.Controls.Add(lbServerMetrics);
-                        }
-
-                        break;
-                    case "Kick Player":
-
-                        await palworldRESTAPIClient.KickPlayerASync(comboUserList.SelectedValue.ToString(), txtReasonMessage.Text);
-
-                        txtResponse.ReadOnly = true;
-                        txtResponse.Dock = DockStyle.Fill;
-                        txtResponse.Text = "Player kicked.";
-                        panelResponse.Controls.Add(txtResponse);
-
-                        break;
-                    case "Ban Player":
-                        await palworldRESTAPIClient.BanPlayerASync(comboUserList.SelectedValue.ToString(), txtReasonMessage.Text);
-
-                        txtResponse.ReadOnly = true;
-                        txtResponse.Dock = DockStyle.Fill;
-                        txtResponse.Text = "Player banned.";
-                        panelResponse.Controls.Add(txtResponse);
-
-                        break;
-                    case "Unban Player":
-
-                        await palworldRESTAPIClient.UnbanPlayerASync(txtUnbanPlayerID.Text);
-                        txtResponse.ReadOnly = true;
-                        txtResponse.Dock = DockStyle.Fill;
-                        txtResponse.Text = "Player unbanned.";
-                        panelResponse.Controls.Add(txtResponse);
-
-                        break;
-                    case "Get Server Settings":
-                        ServerSettings serverSettings = await palworldRESTAPIClient.GetServerSettingsASync();
-
-                        if (serverSettings != null)
-                        {
-                            ListBox lbServerSettings = new ListBox();
-
-                            lbServerSettings.Dock = DockStyle.Fill;
-
-                            lbServerSettings.Items.Add($"Difficulty: {serverSettings.Difficulty}");
-                            lbServerSettings.Items.Add($"Day Time Speed Rate: {serverSettings.DayTimeSpeedRate}");
-                            lbServerSettings.Items.Add($"Night Time Speed Rate: {serverSettings.NightTimeSpeedRate}");
-                            lbServerSettings.Items.Add($"Exp Rate: {serverSettings.ExpRate}");
-                            lbServerSettings.Items.Add($"Pal Capture Rate: {serverSettings.PalCaptureRate}");
-                            lbServerSettings.Items.Add($"Pal Spawn Num Rate: {serverSettings.PalSpawnNumRate}");
-                            lbServerSettings.Items.Add($"Pal Damage Rate Attack: {serverSettings.PalDamageRateAttack}");
-                            lbServerSettings.Items.Add($"Pal Damage Rate Defense: {serverSettings.PalDamageRateDefense}");
-                            lbServerSettings.Items.Add($"Player Damage Rate Attack: {serverSettings.PlayerDamageRateAttack}");
-                            lbServerSettings.Items.Add($"Player Damage Rate Defense: {serverSettings.PlayerDamageRateDefense}");
-                            lbServerSettings.Items.Add($"Player Stomach Decreace Rate: {serverSettings.PlayerStomachDecreaceRate}");
-                            lbServerSettings.Items.Add($"Player Stamina Decreace Rate: {serverSettings.PlayerStaminaDecreaceRate}");
-                            lbServerSettings.Items.Add($"Player Auto HP Regene Rate: {serverSettings.PlayerAutoHPRegeneRate}");
-                            lbServerSettings.Items.Add($"Player Auto Hp Regene Rate In Sleep: {serverSettings.PlayerAutoHpRegeneRateInSleep}");
-                            lbServerSettings.Items.Add($"Pal Stomach Decreace Rate: {serverSettings.PalStomachDecreaceRate}");
-                            lbServerSettings.Items.Add($"Pal Stamina Decreace Rate: {serverSettings.PalStaminaDecreaceRate}");
-                            lbServerSettings.Items.Add($"Pal Auto HP Regene Rate: {serverSettings.PalAutoHPRegeneRate}");
-                            lbServerSettings.Items.Add($"Pal Auto Hp Regene Rate In Sleep: {serverSettings.PalAutoHpRegeneRateInSleep}");
-                            lbServerSettings.Items.Add($"Build Object Damage Rate: {serverSettings.BuildObjectDamageRate}");
-                            lbServerSettings.Items.Add($"Build Object Deterioration Damage Rate: {serverSettings.BuildObjectDeteriorationDamageRate}");
-                            lbServerSettings.Items.Add($"Collection Drop Rate: {serverSettings.CollectionDropRate}");
-                            lbServerSettings.Items.Add($"Collection Object Hp Rate: {serverSettings.CollectionObjectHpRate}");
-                            lbServerSettings.Items.Add($"Collection Object Respawn Speed Rate: {serverSettings.CollectionObjectRespawnSpeedRate}");
-                            lbServerSettings.Items.Add($"Enemy Drop Item Rate: {serverSettings.EnemyDropItemRate}");
-                            lbServerSettings.Items.Add($"Death Penalty: {serverSettings.DeathPenalty}");
-                            lbServerSettings.Items.Add($"bEnablePlayerToPlayerDamage: {serverSettings.bEnablePlayerToPlayerDamage}");
-                            lbServerSettings.Items.Add($"bEnableFriendlyFire: {serverSettings.bEnableFriendlyFire}");
-                            lbServerSettings.Items.Add($"bEnableInvaderEnemy: {serverSettings.bEnableInvaderEnemy}");
-                            lbServerSettings.Items.Add($"bActiveUNKO: {serverSettings.bActiveUNKO}");
-                            lbServerSettings.Items.Add($"bEnableAimAssistPad: {serverSettings.bEnableAimAssistPad}");
-                            lbServerSettings.Items.Add($"bEnableAimAssistKeyboard: {serverSettings.bEnableAimAssistKeyboard}");
-                            lbServerSettings.Items.Add($"Drop Item Max Num: {serverSettings.DropItemMaxNum}");
-                            lbServerSettings.Items.Add($"Drop Item Max Num UNKO: {serverSettings.DropItemMaxNum_UNKO}");
-                            lbServerSettings.Items.Add($"Base Camp Max Num: {serverSettings.BaseCampMaxNum}");
-                            lbServerSettings.Items.Add($"Base Camp Worker Max Num: {serverSettings.BaseCampWorkerMaxNum}");
-                            lbServerSettings.Items.Add($"Drop Item Alive Max Hours: {serverSettings.DropItemAliveMaxHours}");
-                            lbServerSettings.Items.Add($"bAutoResetGuildNoOnlinePlayers: {serverSettings.bAutoResetGuildNoOnlinePlayers}");
-                            lbServerSettings.Items.Add($"Auto Reset Guild Time No Online Players: {serverSettings.AutoResetGuildTimeNoOnlinePlayers}");
-                            lbServerSettings.Items.Add($"Guild Player Max Num: {serverSettings.GuildPlayerMaxNum}");
-                            lbServerSettings.Items.Add($"Pal Egg Default Hatching Time: {serverSettings.PalEggDefaultHatchingTime}");
-                            lbServerSettings.Items.Add($"Work Speed Rate: {serverSettings.WorkSpeedRate}");
-                            lbServerSettings.Items.Add($"bIsMultiplay: {serverSettings.bIsMultiplay}");
-                            lbServerSettings.Items.Add($"bIsPvP: {serverSettings.bIsPvP}");
-                            lbServerSettings.Items.Add($"bCanPickupOtherGuildDeathPenaltyDrop: {serverSettings.bCanPickupOtherGuildDeathPenaltyDrop}");
-                            lbServerSettings.Items.Add($"bEnableNonLoginPenalty: {serverSettings.bEnableNonLoginPenalty}");
-                            lbServerSettings.Items.Add($"bEnableFastTravel: {serverSettings.bEnableFastTravel}");
-                            lbServerSettings.Items.Add($"bIsStartLocationSelectByMap: {serverSettings.bIsStartLocationSelectByMap}");
-                            lbServerSettings.Items.Add($"bExistPlayerAfterLogout: {serverSettings.bExistPlayerAfterLogout}");
-                            lbServerSettings.Items.Add($"bEnableDefenseOtherGuildPlayer: {serverSettings.bEnableDefenseOtherGuildPlayer}");
-                            lbServerSettings.Items.Add($"Coop Player Max Num: {serverSettings.CoopPlayerMaxNum}");
-                            lbServerSettings.Items.Add($"Server Player Max Num: {serverSettings.ServerPlayerMaxNum}");
-                            lbServerSettings.Items.Add($"Server Name: {serverSettings.ServerName}");
-                            lbServerSettings.Items.Add($"Server Description: {serverSettings.ServerDescription}");
-                            lbServerSettings.Items.Add($"Public Port: {serverSettings.PublicPort}");
-                            lbServerSettings.Items.Add($"Public IP: {serverSettings.PublicIP}");
-                            lbServerSettings.Items.Add($"RCON Enabled: {serverSettings.RCONEnabled}");
-                            lbServerSettings.Items.Add($"RCON Port: {serverSettings.RCONPort}");
-                            panelResponse.Controls.Add(lbServerSettings);
-
-                        }
-                        break;
-                    case "Save World":
-
-                        await palworldRESTAPIClient.SaveWorldASync();
-                        TextBox textBox2 = new TextBox();
-                        textBox2.ReadOnly = true;
-                        textBox2.Dock = DockStyle.Fill;
-                        textBox2.Text = "World Saved.";
-                        panelResponse.Controls.Add(textBox2);
-                        break;
-                    case "Broadcast Message":
-
-                        await palworldRESTAPIClient.BroadcastMessageASync(txtBroadcastMessage.Text);
-
-                        TextBox tbBroadcastMessage = new TextBox();
-                        tbBroadcastMessage.ReadOnly = true;
-                        tbBroadcastMessage.Dock = DockStyle.Fill;
-                        tbBroadcastMessage.Text = "Message Broadcasted.";
-                        panelResponse.Controls.Add(tbBroadcastMessage);
-                        break;
-                    case "Shutdown Server":
-
-                        await palworldRESTAPIClient.ShutdownASync((int)shutdownDelay.Value, txtReasonMessage.Text);
-
-                        txtResponse.ReadOnly = true;
-                        txtResponse.Dock = DockStyle.Fill;
-                        txtResponse.Text = "Server shutdown sequence initiated.";
-                        panelResponse.Controls.Add(txtResponse);
-                        break;
-                    case "Stop Server":
-
-                        await palworldRESTAPIClient.StopServerASync();
-
-                        txtResponse.ReadOnly = true;
-                        txtResponse.Dock = DockStyle.Fill;
-                        txtResponse.Text = "Server Stop acknowledged.";
-                        panelResponse.Controls.Add(txtResponse);
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"{ex.Message}\n\nException:\n{ex.StackTrace}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private async void btnExecute_Click(object sender, EventArgs e)
-        {
-            Execute();
-
-            connectionStatus.Text = "Executed";
-        }
-
-        private void cbTrackMetrics_CheckedChanged(object sender, EventArgs e)
-        {
-            if (cbTrackMetrics.Checked)
-            {
-                // Show user a warning and prompt to continue or cancel.
-                DialogResult result = MessageBox.Show("Tracking server metrics will periodically poll the REST API resulting in excessive log spam in the server console. Do you want to continue?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-
-                if (result == DialogResult.No)
-                {
-                    cbTrackMetrics.Checked = false;
-                }
-            }
-        }
-
-        private void cbUseProxy_CheckedChanged(object sender, EventArgs e)
-        {
-            if (cbUseProxy.Checked)
-            {
-                lblPassword.Text = "Token";
-                _usingProxy = true;
-            }
-            else
-            {
-                lblPassword.Text = "Password";
-            }
-        }
-
-        private void groupBox2_Enter(object sender, EventArgs e)
-        {
-
+            MessageBox.Show(message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
-
-namespace Palworld.RESTSharp.Common
+namespace Palworld.RESTSharp
 {
     /// <summary>
     /// Represents a server metric object returned from the API.
@@ -11,27 +10,27 @@ namespace Palworld.RESTSharp.Common
         /// The FPS of the server.
         /// </summary>
         [JsonProperty("serverfps")]
-        public int serverFPS { get; set; }
+        public int ServerFPS { get; set; }
         /// <summary>
         /// Total number of players on the server.
         /// </summary>
         [JsonProperty("currentplayernum")]
-        public int totalPlayers { get; set; }
+        public int CurrentPlayers { get; set; }
         /// <summary>
         /// Server frame time measured in milliseconds.
         /// </summary>
         [JsonProperty("serverframetime")]
-        public float serverFrameRate { get; set; }
+        public float ServerFrameTime { get; set; }
         /// <summary>
         /// Maximum number of players allowed on the server.
         /// </summary>
         [JsonProperty("maxplayernum")]
-        public int maxPlayers { get; set; }
+        public int MaxPlayers { get; set; }
         /// <summary>
         /// Uptime of the server in seconds.
         /// </summary>
         [JsonProperty("uptime")]
-        public int upTime { get; set; }
+        public int Uptime { get; set; }
 
         /// <summary>
         /// Gets the uptime of the server expressed in hours, minutes, and seconds.
@@ -39,10 +38,10 @@ namespace Palworld.RESTSharp.Common
         /// <returns></returns>
         public string GetUptimeString()
         {
-            int days = upTime / 86400;
-            int hours = upTime / 3600;
-            int minutes = upTime % 3600 / 60;
-            int seconds = upTime % 60;
+            int days = Uptime / 86400;
+            int hours = Uptime / 3600;
+            int minutes = Uptime % 3600 / 60;
+            int seconds = Uptime % 60;
             return $"{days}d {hours}h {minutes}m {seconds}s";
         }
     }

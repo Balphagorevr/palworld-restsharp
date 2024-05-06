@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Palworld.RESTSharp.Common;
+using Palworld.RESTSharp.ProxyServer;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -22,20 +22,24 @@ namespace Palworld.RESTSharp
 
         #region Public fields
         /// <summary>
-        /// Configuration and user data retrieved from the proxy server.
+        /// Configuration for the Poxy Service REST API client.
         /// </summary>
-        public PalworldRESTsharpProxyServer ProxyServer { get; internal set; }
+        public PalworldRESTSharpProxyServer ProxyServer { get; internal set; }
+
+        /// <summary>
+        /// Configuration for the REST API client.
+        /// </summary>
+        public PalworldRESTSharpClientConfig Configuration { get; internal set; }
+
+        /// <summary>
+        /// Shares information about the Pal server such as the server name, version, and description.
+        /// </summary>
+        public ServerInfo PalServerInfo { get; internal set; }
 
         /// <summary>
         /// Returns true if the endpoint is the Palworld RESTsharp proxy server.
         /// </summary>
-        public bool UsingProxy
-        {
-            get
-            {
-                return ProxyServer == null ? true : false ;
-            }
-        }
+        public readonly bool UsingProxy;
 
         #endregion
 
@@ -50,50 +54,38 @@ namespace Palworld.RESTSharp
         /// </remarks>
         /// <param name="apiURL">URL to the PalServer REST API hostname/IP and port.</param>
         /// <param name="password">The password defined in the 'AdminPassword' setting of your server configuration.</param>
-        public PalworldRESTSharpClient(string apiURL, string password)
+        /// <param name="timeout">The timeout in seconds for the connection to the REST API server.</param>
+        /// <param name="useProxy">Use PalSharp REST API Proxy server endpoints instead.</param>
+        public PalworldRESTSharpClient(string apiURL, string password, bool useProxy = false, short timeout = 30)
         {
-            InitializeClient(apiURL, password, 30);
-        }
-
-        /// <summary>
-        /// HTTP Client to conneect to PalServer REST API service with pre-defined API URL, password, and a configured timeout in seconds.
-        /// </summary>
-        /// <remarks>
-        /// It is <u>advised</u> to NOT expose your REST API port to the internet as the Palworld serveer REST API only communicates through HTTP and uses BASIC authentication which can expose your server password through the internet. Consider using a HTTPS proxy server between your REST API and the internet.
-        /// <br></br><br></br>You will need to have <strong>'RESTAPIEnabled=True,RESTAPIPort=xxxxx'</strong> in your server configuration file. Be sure to specify and open the port you provide within RESTAPIPort.
-        /// <br></br><br></br><see href="https://tech.palworldgame.com/api/rest-api/palwold-rest-api">Consult the Palworld server documentation for more information on how to set up the REST API</see>
-        /// </remarks>
-        /// <param name="apiURL">URL to the PalServer REST API hostname/IP and port.</param>
-        /// <param name="password">The password defined in the 'AdminPassword' setting of your server configuration.</param>
-        /// <param name="timeout">Timeout in seconds for the HTTP client to wait for a response.</param>
-        public PalworldRESTSharpClient(string apiURL, string password, int timeout)
-        {
-            InitializeClient(apiURL, password, timeout);
+            Configuration = new PalworldRESTSharpClientConfig(apiURL, password, timeout);
+            UsingProxy = useProxy;
+            Task.Run(() => ConnectAsync()).Wait();
         }
         #endregion
 
         #region Helper Methods
-        private async Task InitializeClient(string apiURL, string password, int timeout)
+        /// <summary>
+        /// Configures HTTP client and prepares to connect to the Palworld REST API service.
+        /// </summary>
+        /// <returns></returns>
+        private async Task ConnectAsync()
         {
-            
-            _restAPIURL = apiURL;
-            Timeout = new TimeSpan(0, 0, timeout);
-            BaseAddress = new Uri($"{_restAPIURL}");
+            _restAPIURL = Configuration.APIEndpointURL;
+            Timeout = new TimeSpan(0, 0, Configuration.ConnectionTimeout);
+            BaseAddress = new Uri($"{_restAPIURL}/");
 
-            string? proxyServerVersion = await GetProxyServiceVersion();
-
-            if (!String.IsNullOrEmpty(proxyServerVersion))
+            if (UsingProxy)
             {
-                ProxyServer = new PalworldRESTsharpProxyServer();
-
-                ProxyServer.Version = proxyServerVersion;
-
-                DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", password);
+                this.ProxyServer = new PalworldRESTSharpProxyServer(this);
             }
             else
             {
-                DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Utils.GetEncodedAuth(password));
+                // We're connected directly to the Pal REST API Server, uses Basic.
+                DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Utils.GetEncodedAuth(Configuration.Password));
             }
+
+            this.PalServerInfo = await GetServerInfoASync();
         }
         #endregion
 
@@ -108,7 +100,9 @@ namespace Palworld.RESTSharp
 
             Utils.ValidateResponse(response);
 
-            return JsonConvert.DeserializeObject<ServerMetric>(await response.Content.ReadAsStringAsync());
+            ServerMetric metric = JsonConvert.DeserializeObject<ServerMetric>(await response.Content.ReadAsStringAsync());
+
+            return metric;
         }
 
         /// <summary>
@@ -117,11 +111,15 @@ namespace Palworld.RESTSharp
         /// <returns>Server Information object.</returns>
         public async Task<ServerInfo> GetServerInfoASync()
         {
+            if (PalServerInfo != null) return PalServerInfo;
+
             HttpResponseMessage response = await GetAsync("v1/api/info");
 
             Utils.ValidateResponse(response);
 
-            return JsonConvert.DeserializeObject<ServerInfo>(await response.Content.ReadAsStringAsync());
+            PalServerInfo = JsonConvert.DeserializeObject<ServerInfo>(await response.Content.ReadAsStringAsync());
+
+            return PalServerInfo;
         }
 
         /// <summary>
@@ -134,7 +132,11 @@ namespace Palworld.RESTSharp
 
             Utils.ValidateResponse(response);
 
-            return JsonConvert.DeserializeObject<Players>(await response.Content.ReadAsStringAsync());
+            string stringContent = await response.Content.ReadAsStringAsync();
+
+            Players players = JsonConvert.DeserializeObject<Players>(stringContent);
+
+            return players;
         }
 
         /// <summary>
@@ -147,8 +149,9 @@ namespace Palworld.RESTSharp
 
             Utils.ValidateResponse(response);
 
-            return JsonConvert.DeserializeObject<ServerSettings>(await response.Content.ReadAsStringAsync());
+            ServerSettings serverSettings = JsonConvert.DeserializeObject<ServerSettings>(await response.Content.ReadAsStringAsync());
 
+            return serverSettings;
         }
         #endregion
 
@@ -157,7 +160,7 @@ namespace Palworld.RESTSharp
         /// Kicks a player from the server.
         /// </summary>
         /// <param name="player">Steam ID(steam_xxxxxxxxxxx) of the player to kick.</param>
-        public async Task KickPlayerASync(string steamID, string message) => await KickPlayerASync(new Player() { userid = steamID }, message);
+        public async Task KickPlayerASync(string steamID, string message) => await KickPlayerASync(new Player() { UserID = steamID }, message);
 
         /// <summary>
         /// Kicks a player from the server.
@@ -165,7 +168,7 @@ namespace Palworld.RESTSharp
         /// <param name="player">Player object</param>
         public async Task KickPlayerASync(Player player, string message)
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/kick", new PlayerAction(player.userid, message));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/kick", new PlayerAction(player.UserID, message));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -175,7 +178,7 @@ namespace Palworld.RESTSharp
         /// Bans a player from the server.
         /// </summary>
         /// <param name="steamID">Steam ID(steam_xxxxxxxxxxx) of the player to ban.</param>
-        public async Task BanPlayerASync(string steamID, string message) => await BanPlayerASync(new Player() { userid = steamID }, message);
+        public async Task BanPlayerASync(string steamID, string message) => await BanPlayerASync(new Player() { UserID = steamID }, message);
 
         /// <summary>
         /// Bans a player from the server.
@@ -183,7 +186,7 @@ namespace Palworld.RESTSharp
         /// <param name="player">Player to ban. Must have Steam ID present.</param>
         public async Task BanPlayerASync(Player player, string message)
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/ban", new PlayerAction(player.userid, message));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/ban", new PlayerAction(player.UserID, message));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -193,7 +196,7 @@ namespace Palworld.RESTSharp
         /// Unbans a player from the server.
         /// </summary>
         /// <param name="steamID">Steam ID(steam_xxxxxxxxxxx) of the player to unban.</param>
-        public async Task UnbanPlayerASync(string steamID) => await UnbanPlayerASync(new Player() { userid = steamID });
+        public async Task UnbanPlayerASync(string steamID) => await UnbanPlayerASync(new Player() { UserID = steamID });
 
         /// <summary>
         /// Bans a player from the server.
@@ -201,7 +204,7 @@ namespace Palworld.RESTSharp
         /// <param name="player">Player to unban. Must have Steam ID present.</param>
         public async Task UnbanPlayerASync(Player player)
         {
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/unban", new PlayerAction(player.userid, null));
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/unban", new PlayerAction(player.UserID, null));
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -230,9 +233,28 @@ namespace Palworld.RESTSharp
         /// <param name="message">The message to broadcast.</param>
         public async Task BroadcastMessageASync(string message)
         {
-            if (string.IsNullOrEmpty(message)) throw new ArgumentNullException(nameof(message), "Message cannot be null or empty.");
+            AnnounceMessage announceMessage = new AnnounceMessage(message);
 
-            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/announce", new AnnounceMessage(message));
+            if (string.IsNullOrEmpty(announceMessage.Message)) throw new ArgumentNullException(nameof(message), "Message cannot be null or empty.");
+
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/announce", announceMessage);
+            HttpResponseMessage response = await SendAsync(requestMessage);
+
+            Utils.ValidateResponse(response);
+        }
+
+        /// <summary>
+        /// Broadcasts a message to the server chat. Equivalent to the /broadcast command.
+        /// </summary>
+        /// <remarks>
+        /// Your message will be sent as "[SYSTEM]" in chat.
+        /// </remarks>
+        /// <param name="message">The message to broadcast.</param>
+        public async Task BroadcastMessageASync(AnnounceMessage message)
+        {
+            if (string.IsNullOrEmpty(message.Message)) throw new ArgumentNullException(nameof(message), "Message cannot be null or empty.");
+
+            HttpRequestMessage requestMessage = Utils.CreateHttpPostRequest("v1/api/announce", message);
             HttpResponseMessage response = await SendAsync(requestMessage);
 
             Utils.ValidateResponse(response);
@@ -265,30 +287,6 @@ namespace Palworld.RESTSharp
 
             Utils.ValidateResponse(response);
         }
-        #endregion
-
-        #region Proxy Endpoints
-
-        public async Task<string?> GetProxyServiceVersion()
-        {
-            HttpResponseMessage response = await GetAsync("api/proxyservice/version");
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
-
-            Utils.ValidateResponse(response);
-
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        public async Task<User> GetUserProfile(string userToken)
-        {
-            HttpResponseMessage response = await GetAsync("api/user/profile");
-
-            Utils.ValidateResponse(response);
-
-            return JsonConvert.DeserializeObject<User>(await response.Content.ReadAsStringAsync());
-        }
-
         #endregion
     }
 }

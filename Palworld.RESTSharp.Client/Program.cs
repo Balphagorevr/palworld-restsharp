@@ -6,7 +6,15 @@ namespace Palworld.RESTSharp.Client
         static void Main()
         {
             ApplicationConfiguration.Initialize();
-            Application.Run(new FormMain());
+            FormMain mainForm = new FormMain();
+            try
+            {
+                Application.Run(mainForm);
+            }
+            catch(Exception ex)
+            {
+                mainForm.DisplayError("An unhandled error has occurred. Please open a bug report at https://github.com/Balphagorevr/palworld-restsharp/issues.");
+            }
         }
     }
 }

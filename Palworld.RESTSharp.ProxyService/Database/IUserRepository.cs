@@ -1,4 +1,4 @@
-﻿using Palworld.RESTSharp.Common;
+﻿using Palworld.RESTSharp.ProxyServer;
 
 namespace Palworld.RESTSharp.ProxyService.Database
 {
@@ -10,5 +10,6 @@ namespace Palworld.RESTSharp.ProxyService.Database
         Task<bool> UpdateUser(User player);
         Task<IEnumerable<User>> Get();
         Task<bool> Delete(int userID);
+        Task<UserAccessLevel> GetAccessLevel(User userID);
     }
 }

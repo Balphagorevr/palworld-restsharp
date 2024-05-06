@@ -1,4 +1,4 @@
-﻿namespace Palworld.RESTSharp.Common
+﻿namespace Palworld.RESTSharp
 {
     /// <summary>
     /// Represents the location of a player in the game.

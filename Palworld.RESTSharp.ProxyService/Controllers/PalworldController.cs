@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Palworld.RESTSharp.Common;
+using Newtonsoft.Json;
+using Palworld.RESTSharp.ProxyServer;
 
 namespace Palworld.RESTSharp.ProxyService.Controllers
 {
@@ -9,76 +10,82 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         PalworldRESTSharpProxyConfig config;
         PalworldRESTSharpClient palworldRESTSharpClient;
         IUserManager userManager;
-
-        private async Task<bool> AuthorizeUser(string[] roles)
-        {
-            string userToken = Request.Headers["Authorization"];
-            if (String.IsNullOrEmpty(userToken))
-            {
-                return false;
-            }
-
-            userToken = userToken.Replace("Bearer ", "");
-            return await userManager.TokenHasRoles(userToken, roles);
-        }
+        IAuditManager auditManager;
 
         public PalworldController(
             IConfiguration configuration,
-            IUserManager userManager)
+            IUserManager userManager,
+            IAuditManager auditManager)
         {
             config = configuration.GetSection("PalworldRESTSharpProxyConfig").Get<PalworldRESTSharpProxyConfig>();
             palworldRESTSharpClient = new PalworldRESTSharpClient(config.ServerRESTUrl, config.PalworldServerAdminPass);
+            this.auditManager = auditManager;
             this.userManager = userManager;
         }
 
-        [HttpGet("Info")]
+        [HttpGet("info")]
         public async Task<IActionResult> Info()
         {
-            return Ok(await palworldRESTSharpClient.GetServerInfoASync());
+            return Ok(JsonConvert.SerializeObject(await palworldRESTSharpClient.GetServerInfoASync()));
         }
 
         [HttpGet("players")]
         public async Task<IActionResult> Players()
         {
-            if (await AuthorizeUser(["Owner","Admin","Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
-            return Ok(await palworldRESTSharpClient.GetPlayersASync());
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Moderator) return Unauthorized("Invalid Token or you do not have permission.");
+            return Ok(JsonConvert.SerializeObject(await palworldRESTSharpClient.GetPlayersASync()));
         }
 
         [HttpGet("settings")]
         public async Task<IActionResult> Settings()
         {
-            if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
-            return Ok(await palworldRESTSharpClient.GetServerSettingsASync());
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Admin) return Unauthorized("Invalid Token or you do not have permission.");
+
+            return Ok(JsonConvert.SerializeObject(await palworldRESTSharpClient.GetServerSettingsASync()));
         }
 
         [HttpGet("metrics")]
         public async Task<IActionResult> Metrics()
         {
-            return Ok(await palworldRESTSharpClient.GetServerMetricsASync());
+            return Ok(JsonConvert.SerializeObject(await palworldRESTSharpClient.GetServerMetricsASync()));
         }
 
         [HttpPost("announce")]
-        public async Task<IActionResult> AnnounceAsync([FromBody] string message)
+        public async Task<IActionResult> AnnounceAsync([FromBody] AnnounceMessage message)
         {
-            if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Moderator) return Unauthorized("Invalid Token or you do not have permission.");
+
+            auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.BroadcastMessage, $"Message={message.Message}"));
+
             await palworldRESTSharpClient.BroadcastMessageASync(message);
+
             return Ok("Broadcasted message.");
         }
 
         [HttpPost("kick")]
         public async Task<IActionResult> Kick([FromBody] PlayerAction playerAction)
         {
-            if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
-            await palworldRESTSharpClient.KickPlayerASync(playerAction.steamID, playerAction.message);
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Moderator) return Unauthorized("Invalid Token or you do not have permission.");
 
+            auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.KickPlayer, $"SteamID={playerAction.SteamID};Reason={playerAction.Message}"));
+
+            await palworldRESTSharpClient.KickPlayerASync(playerAction.SteamID, playerAction.Message);
             return Ok("Kicked player.");
         }
 
         [HttpPost("ban")]
         public async Task<IActionResult> Ban([FromBody] PlayerAction playerAction)
         {
-            if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
-            await palworldRESTSharpClient.BanPlayerASync(playerAction.steamID, playerAction.message);
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Moderator) return Unauthorized("Invalid Token or you do not have permission.");
+
+            auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.BanPlayer, $"SteamID={playerAction.SteamID};Reason={playerAction.Message}"));
+
+            await palworldRESTSharpClient.BanPlayerASync(playerAction.SteamID, playerAction.Message);
 
             return Ok("Banned player.");
         }
@@ -86,8 +93,12 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         [HttpPost("shutdown")]
         public async Task<IActionResult> Shutdown([FromBody] ShutdownRequest shutdownRequest)
         {
-            if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
-            await palworldRESTSharpClient.ShutdownASync(shutdownRequest.waittime, shutdownRequest.message);
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Admin) return Unauthorized("Invalid Token or you do not have permission.");
+
+            auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.ShutdownServer, $"Seconds={shutdownRequest.WaitTime};Message={shutdownRequest.Message}"));
+
+            await palworldRESTSharpClient.ShutdownASync(shutdownRequest.WaitTime, shutdownRequest.Message);
 
             return Ok("Shutdown requested.");
         }
@@ -95,7 +106,11 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         [HttpPost("stop")]
         public async Task<IActionResult> Stop()
         {
-            if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Admin) return Unauthorized("Invalid Token or you do not have permission.");
+
+            auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.StopServer));
+            
             await palworldRESTSharpClient.StopServerASync();
 
             return Ok("Stop requested.");
@@ -104,10 +119,30 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
         [HttpPost("save")]
         public async Task<IActionResult> Save()
         {
-            if (await AuthorizeUser(["Owner", "Admin", "Moderator"]) == false) return Unauthorized("Invalid Token or you do not have permission.");
+            User executingUser = await GetExecutingUser();
+            if (executingUser.Role > UserAccessLevel.Admin) return Unauthorized("Invalid Token or you do not have permission.");
+
+            auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.WorldSaved));
+
             await palworldRESTSharpClient.SaveWorldASync();
 
             return Ok("World saved.");
+        }
+
+        private async Task<User?> GetExecutingUser()
+        {
+            string userToken = Request.Headers.Authorization;
+            userToken = userToken.Replace("Bearer ", "");
+
+            if (String.IsNullOrEmpty(userToken))
+            {
+                return null;
+            }
+
+            return await userManager.Get(new User()
+            {
+                Password = userToken
+            });
         }
     }
 }

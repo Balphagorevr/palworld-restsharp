@@ -26,6 +26,15 @@ namespace Palworld.RESTSharp
             return requestMessage;
         }
 
+        internal static HttpRequestMessage CreateHTTPPutRequest(string apiEndpoint, object requestData)
+        {
+            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Put, apiEndpoint);
+            string json = JsonConvert.SerializeObject(requestData);
+            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
+            requestMessage.Content = content;
+            return requestMessage;
+        }
+
         internal static void ValidateResponse(HttpResponseMessage response)
         {
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) throw new PalworldRESTSharpClientUnauthorizedException(response.Content.ReadAsStringAsync().Result);

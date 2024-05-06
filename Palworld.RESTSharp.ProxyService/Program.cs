@@ -1,6 +1,6 @@
 using Palworld.RESTSharp.ProxyService.Database.SQLite;
 using Palworld.RESTSharp.ProxyService.Database;
-using System.Text.Json.Serialization;
+using Palworld.RESTSharp.ProxyServer;
 
 namespace Palworld.RESTSharp.ProxyService
 {
@@ -19,20 +19,15 @@ namespace Palworld.RESTSharp.ProxyService
             }));
             builder.Services.AddSingleton<IDataContext, SQLiteDatabaseContext>();
             builder.Services.AddSingleton<IUserRepository, UserRepository>();
+            builder.Services.AddSingleton<IAuditRepository, AuditRepository>();
             builder.Services.AddSingleton<IUserManager, UserManager>();
-
+            builder.Services.AddSingleton<IAuditManager, AuditManager>();
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.ConfigureHttpJsonOptions(o =>
-            {
-                var converter = new JsonStringEnumConverter();
-                o.SerializerOptions.Converters.Add(converter);
-                o.SerializerOptions.IgnoreReadOnlyFields = true;
-            });
-
             var app = builder.Build();
+
             app.Services.GetService<IDataContext>().Setup();
 
             if (app.Environment.IsDevelopment())
