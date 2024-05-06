@@ -20,6 +20,6 @@
         /// <summary>
         /// Version of the Palworld RESTSharp API Proxy server.
         /// </summary>
-        public string Version { get; internal set; }
+        public string Version { get; set; }
     }
 }
