@@ -1,11 +1,13 @@
-﻿namespace Palworld.RESTSharp.Client
+﻿using System.ComponentModel;
+
+namespace Palworld.RESTSharp.Client
 {
     public partial class ServerMetricsPage : UserControl
     {
         PalworldRESTSharpClient palAPIClient;
 
         public event EventHandler onMetricsRefreshed;
-
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ServerMetric metrics { get; private set; }
         public ServerMetricsPage()
         {

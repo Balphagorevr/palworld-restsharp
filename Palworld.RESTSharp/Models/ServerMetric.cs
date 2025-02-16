@@ -31,7 +31,11 @@ namespace Palworld.RESTSharp
         /// </summary>
         [JsonProperty("uptime")]
         public int Uptime { get; set; }
-
+        /// <summary>
+        /// Total number of in-game days that has passed since the world was created.
+        /// </summary>
+        [JsonProperty("days")]
+        public int Days { get; set; }
         /// <summary>
         /// Gets the uptime of the server expressed in hours, minutes, and seconds.
         /// </summary>

@@ -22,7 +22,11 @@ namespace Palworld.RESTSharp
         /// </summary>
         [JsonProperty("description")]
         public string Description { get; set; }
-
+        /// <summary>
+        /// GUID for the world.
+        /// </summary>
+        [JsonProperty("worldguid")]
+        public string WorldGUID { get; set; }
         /// <summary>
         /// Returns the string representation of the server info.
         /// </summary>

@@ -77,6 +77,18 @@ namespace Palworld.RESTSharp.ProxyServer
         /// <summary>
         /// When the database is created.
         /// </summary>
-        DatabaseCreated
+        DatabaseCreated,
+        /// <summary>
+        /// A proxy user was created.
+        /// </summary>
+        UserCreated,
+        /// <summary>
+        /// A proxy user was edited.
+        /// </summary>
+        UserEdited,
+        /// <summary>
+        /// A proxy user was deleted.
+        /// </summary>
+        UserDeleted
     }
 }

@@ -84,6 +84,10 @@ namespace Palworld.RESTSharp
         [JsonProperty("location_y")]
         public float YPosition { get; set; }
         /// <summary>
+        /// Total number of buildings owned by the player on the server.
+        /// </summary>
+        public int BuildingCount { get; set; }
+        /// <summary>
         /// Returns a player location object consisting of the X and Y coordinates of the player at the time of response.
         /// </summary>
         /// <returns>The player location object.</returns>

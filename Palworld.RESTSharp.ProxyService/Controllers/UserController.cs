@@ -7,10 +7,12 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
     public class UserController : ControllerBase
     {
         IUserManager userManager;
+        IAuditManager auditManager;
 
-        public UserController(IUserManager userManager)
+        public UserController(IUserManager userManager, IAuditManager auditManager)
         {
             this.userManager = userManager;
+            this.auditManager = auditManager;
         }
 
         [HttpPost("add")]
@@ -19,8 +21,10 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             try
             {
                 if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
-
+                User executingUser = await GetExecutingUser();
                 user.ID = await userManager.Add(user);
+
+                auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.UserCreated, $"NewUserID={user.ID};User={user.Username};Role={user.Role};"));
 
                 return Ok(user);
             }
@@ -98,6 +102,10 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             {
                 if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
 
+                User executingUser = await GetExecutingUser();
+                auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.UserEdited, $"User={user.Username};FinalRole={user.Role};."));
+
+
                 await userManager.UpdateUser(user);
 
                 return Ok("User updated.");
@@ -115,6 +123,9 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             try
             {
                 if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
+
+                User executingUser = await GetExecutingUser();
+                auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.UserEdited, $"DeletedUserID={userID};."));
 
                 bool isDeleted = await userManager.Delete(userID);
 
@@ -141,6 +152,22 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             {
                 Password = userToken
             }) <= level;
+        }
+
+        private async Task<User?> GetExecutingUser()
+        {
+            string userToken = Request.Headers.Authorization;
+            userToken = userToken.Replace("Bearer ", "");
+
+            if (String.IsNullOrEmpty(userToken))
+            {
+                return null;
+            }
+
+            return await userManager.Get(new User()
+            {
+                Password = userToken
+            });
         }
     }
 }

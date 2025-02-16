@@ -1,8 +1,11 @@
-﻿namespace Palworld.RESTSharp.Client
+﻿using System.ComponentModel;
+
+namespace Palworld.RESTSharp.Client
 {
     public partial class ServerSettingsPage : UserControl
     {
         PalworldRESTSharpClient palAPIClient;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ServerSettings serverSettings { get; private set; }
         public ServerSettingsPage()
         {
