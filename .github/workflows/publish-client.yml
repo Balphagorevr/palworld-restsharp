@@ -41,7 +41,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '8.0' # my pref
+        dotnet-version: '9.0' # my pref
 
     - name: Restore and Build Client Application
       run: |
@@ -64,7 +64,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '8.0' # my pref
+        dotnet-version: '9.0' # my pref
 
     - name: Restore and Build Client Application
       run: |
