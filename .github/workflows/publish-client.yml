@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '3.1'
 
@@ -26,20 +26,20 @@ jobs:
 
     # add as artifact
     - name: Upload NuGet Package
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: nuget-package
-        path: nupkg
+        path: "nupkg"
 
   build-windows-client-x64:
     needs: build-library
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '9.0' # my pref
 
@@ -49,20 +49,20 @@ jobs:
         dotnet publish Palworld.RESTSharp.Client/Palworld.RESTSharp.Client.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/win-x64
 
     - name: Upload WinForms Application
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: windows-client
-        path: publish/win-x64
+        path: "publish/win-x64"
 
   build-windows-client-x32:
     needs: build-library
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '9.0' # my pref
 
@@ -72,7 +72,7 @@ jobs:
         dotnet publish Palworld.RESTSharp.Client/Palworld.RESTSharp.Client.csproj -c Release -r win-x86 --self-contained true -p:PublishSingleFile=true -o publish/win-x86
 
     - name: Upload WinForms Application
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: windows-client
-        path: publish/win-x64
+        path: "publish/win-x86"
