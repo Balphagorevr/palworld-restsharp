@@ -34,6 +34,7 @@
             lblProxyURL = new LinkLabel();
             lblend = new Label();
             groupBox3 = new GroupBox();
+            btnChangePassword = new Button();
             btnLogout = new Button();
             lblRole = new Label();
             lblUsername = new Label();
@@ -95,6 +96,7 @@
             // 
             // groupBox3
             // 
+            groupBox3.Controls.Add(btnChangePassword);
             groupBox3.Controls.Add(btnLogout);
             groupBox3.Controls.Add(lblRole);
             groupBox3.Controls.Add(lblUsername);
@@ -104,6 +106,16 @@
             groupBox3.TabIndex = 3;
             groupBox3.TabStop = false;
             groupBox3.Text = "My Account";
+            // 
+            // btnChangePassword
+            // 
+            btnChangePassword.Location = new Point(416, 22);
+            btnChangePassword.Name = "btnChangePassword";
+            btnChangePassword.Size = new Size(119, 23);
+            btnChangePassword.TabIndex = 3;
+            btnChangePassword.Text = "Change Password";
+            btnChangePassword.UseVisualStyleBackColor = true;
+            btnChangePassword.Click += btnChangePassword_Click;
             // 
             // btnLogout
             // 
@@ -162,5 +174,6 @@
         private Label lblRole;
         private Label lblUsername;
         private Label lblProxyVersion;
+        private Button btnChangePassword;
     }
 }

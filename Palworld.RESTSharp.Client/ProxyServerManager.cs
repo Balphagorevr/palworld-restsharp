@@ -1,4 +1,6 @@
-﻿namespace Palworld.RESTSharp.Client
+﻿using Palworld.RESTSharp.ProxyServer;
+
+namespace Palworld.RESTSharp.Client
 {
     public partial class ProxyServerManager : UserControl
     {
@@ -30,6 +32,20 @@
             if (this.logoutClicked != null)
             {
                 this.logoutClicked(this, new EventArgs());
+            }
+        }
+
+        private void btnChangePassword_Click(object sender, EventArgs e)
+        {
+            User proxyUser = palAPIClient.ProxyServer.ProxyUser;
+            FormChangePassword formChangePassword = new FormChangePassword();
+            formChangePassword.ShowDialog(proxyUser);
+
+            if (formChangePassword.DialogResult == DialogResult.OK)
+            {
+                proxyUser.Password = formChangePassword.newPassword;
+                palAPIClient.ProxyServer.UpdateUserPassword(proxyUser);
+                MessageBox.Show("Password updated successfully.", "Password Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
     }

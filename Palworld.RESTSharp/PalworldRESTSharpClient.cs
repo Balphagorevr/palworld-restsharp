@@ -85,7 +85,7 @@ namespace Palworld.RESTSharp
                 DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Utils.GetEncodedAuth(Configuration.Password));
             }
 
-            this.PalServerInfo = await GetServerInfoASync();
+            //this.PalServerInfo = await GetServerInfoASync();
         }
         #endregion
 

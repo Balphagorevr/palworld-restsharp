@@ -1,5 +1,7 @@
-﻿using Palworld.RESTSharp.ProxyServer;
+﻿using Microsoft.Win32;
+using Palworld.RESTSharp.ProxyServer;
 using System.Configuration;
+using System.Runtime.CompilerServices;
 
 namespace Palworld.RESTSharp.Client
 {
@@ -24,6 +26,10 @@ namespace Palworld.RESTSharp.Client
         public FormMain()
         {
             InitializeComponent();
+
+            txtAPIEndpoint.Text = LoadSetting("apiURL") == null ? "" : LoadSetting("apiURL");
+            txtPasswordToken.Text = LoadSetting("passwordToken") == null ? "" : LoadSetting("passwordToken");
+            cbUseProxy.Checked = bool.Parse(LoadSetting("useProxy") == null ? "false" : LoadSetting("useProxy"));
         }
 
         public delegate void ProgressDelegate(int progress);
@@ -33,34 +39,29 @@ namespace Palworld.RESTSharp.Client
             this.Text = "Palworld REST Client";
             this.MaximizeBox = false;
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
-
-            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            ConfigurationSection configurationSection = config.GetSection("appSettings");
-
-
-            if (!configurationSection.SectionInformation.IsProtected)
-            {
-                configurationSection.SectionInformation.ProtectSection("DataProtectionConfigurationProvider");
-                config.Save();
-            }
-            txtAPIEndpoint.Text = ConfigurationManager.AppSettings["apiURL"];
-            txtPasswordToken.Text = ConfigurationManager.AppSettings["passwordToken"];
-            cbUseProxy.Checked = bool.Parse(ConfigurationManager.AppSettings["useProxy"]);
+            this.StartPosition = FormStartPosition.CenterScreen;
             menuTree.Visible = false;
 
         }
 
         #region Utility
 
+        private string LoadSetting(string key)
+        {
+            RegistryKey userKey = Registry.CurrentUser.OpenSubKey(@"Software\PalRestSharp");
+            return userKey?.GetValue(key)?.ToString();
+
+            //return Environment.GetEnvironmentVariable(key, EnvironmentVariableTarget.Machine);
+        }
+
         private void UpdateSetting(string key, string data)
         {
-            var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-            var settings = configFile.AppSettings.Settings;
+            if (string.IsNullOrEmpty(data) || string.IsNullOrEmpty(key)) return;
 
-            settings[key].Value = data;
-
-            configFile.Save(ConfigurationSaveMode.Modified);
-            ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
+            RegistryKey userKey = Registry.CurrentUser.CreateSubKey(@"Software\PalRestSharp");
+            userKey.SetValue(key, data);
+            userKey.Close();
+         
         }
 
         #endregion
@@ -120,7 +121,7 @@ namespace Palworld.RESTSharp.Client
 
                 CreateNavItems();
 
-                this.Text = $"Palworld REST Client | {palAPIClient.PalServerInfo.ServerName}";
+                //this.Text = $"Palworld REST Client | {palAPIClient.PalServerInfo.ServerName}";
             }
             catch (Exception ex)
             {
@@ -134,7 +135,7 @@ namespace Palworld.RESTSharp.Client
         private void CreateNavItems()
         {
             menuTree.Visible = true;
-            
+
             if (palAPIClient.UsingProxy)
             {
                 UserAccessLevel accessLevel = localProxyUser.Role;
@@ -158,7 +159,8 @@ namespace Palworld.RESTSharp.Client
                 {
                     menuTree.Nodes.RemoveByKey("nPlayerManagement");
                 }
-            } else
+            }
+            else
             {
                 menuTree.Nodes.RemoveByKey("nProxyServer");
             }

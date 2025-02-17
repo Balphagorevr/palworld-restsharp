@@ -153,6 +153,17 @@ namespace Palworld.RESTSharp.ProxyServer
             return await response.Content.ReadAsStringAsync();
         }
 
+        public async Task<string> UpdateUserPassword(User user)
+        {
+
+            HttpRequestMessage requestMessage = Utils.CreateHTTPPutRequest("v1/api/user/updatePassword", user);
+            HttpResponseMessage response = await _client.SendAsync(requestMessage);
+
+            Utils.ValidateResponse(response);
+
+            return await response.Content.ReadAsStringAsync();
+        }
+
         /// <summary>
         /// Gets the user audit log from the database.
         /// </summary>

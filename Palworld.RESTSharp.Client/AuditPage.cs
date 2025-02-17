@@ -35,6 +35,7 @@ namespace Palworld.RESTSharp.Client
         private async void AuditPage_Load(object sender, EventArgs e)
         {
             const string dateTimeFormat = "MM/dd/yyyy hh:mm";
+            Refresh();
         }
 
         private async void btnWipeAudit_Click(object sender, EventArgs e)
@@ -64,7 +65,6 @@ namespace Palworld.RESTSharp.Client
         private async void btnSearch_Click(object sender, EventArgs e)
         {
             Refresh();
-            //UserAudit[] auditData = palAPIClient.GetAuditData((int)combUsers.SelectedValue, (AuditEventType)combEventType.SelectedValue, dtFromDate.Value, dtToDate.Value);
         }
     }
 }

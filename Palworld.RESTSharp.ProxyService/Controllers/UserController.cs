@@ -95,6 +95,29 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             }
         }
 
+        [HttpPut("updatePassword")]
+        public async Task<IActionResult> UpdateUserPassword([FromBody] User user)
+        {
+            try
+            {
+                User executingUser = await GetExecutingUser();
+                auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.UserUpdatedPassword));
+
+                if (executingUser.Username != user.Username)
+                {
+                    return Unauthorized("Cannot change another user's password.");
+                }
+
+                await userManager.UpdateUser(user);
+
+                return Ok("User updated.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPut("update")]
         public async Task<IActionResult> UpdateUser([FromBody] User user)
         {
@@ -114,7 +137,6 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
             {
                 return BadRequest(ex.Message);
             }
-
         }
 
         [HttpDelete("delete/{userID}")]
@@ -125,7 +147,7 @@ namespace Palworld.RESTSharp.ProxyService.Controllers
                 if (!await AuthenticateUser(UserAccessLevel.Owner)) return Unauthorized("Invalid Token or you do not have permission.");
 
                 User executingUser = await GetExecutingUser();
-                auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.UserEdited, $"DeletedUserID={userID};."));
+                auditManager.Add(new UserAudit(executingUser.ID, AuditEventType.UserDeleted, $"DeletedUserID={userID};."));
 
                 bool isDeleted = await userManager.Delete(userID);
 

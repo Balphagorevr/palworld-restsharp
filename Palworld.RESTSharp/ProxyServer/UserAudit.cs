@@ -89,6 +89,10 @@ namespace Palworld.RESTSharp.ProxyServer
         /// <summary>
         /// A proxy user was deleted.
         /// </summary>
-        UserDeleted
+        UserDeleted,
+        /// <summary>
+        /// User has updated password.
+        /// </summary>
+        UserUpdatedPassword
     }
 }

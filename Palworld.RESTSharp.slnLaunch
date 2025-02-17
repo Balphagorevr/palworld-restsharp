@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Duo Test",
+    "Projects": [
+      {
+        "Path": "Palworld.RESTSharp.ProxyService\\Palworld.RESTSharp.ProxyService.csproj",
+        "Action": "Start",
+        "DebugTarget": "Palworld.RESTSharp.ProxyService"
+      },
+      {
+        "Path": "Palworld.RESTSharp.Client\\Palworld.RESTSharp.Client.csproj",
+        "Action": "Start",
+        "DebugTarget": "Palworld.RESTSharp.Client"
+      }
+    ]
+  }
+]
